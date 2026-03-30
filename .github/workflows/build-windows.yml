@@ -29,22 +29,19 @@ jobs:
 
       - name: Prepare App Folder
         run: |
-          mkdir release
-          mkdir release/app
-          mkdir release/php
-          mkdir release/scripts
-          xcopy /E /I /Y . release/app
-          xcopy /E /I /Y build/scripts release/scripts
-          copy build/launch.vbs release/
-          :: Use production .env
-          copy build/.env.production release/app/.env
-          :: Create and migrate SQLite database
-          type nul > release/app/database/database.sqlite
+          New-Item -ItemType Directory -Path release, release/app, release/php, release/scripts -Force | Out-Null
+          Get-ChildItem -Force | Where-Object { $_.Name -ne 'release' } | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination release/app -Recurse -Force
+          }
+          Copy-Item -Path build/scripts/* -Destination release/scripts -Recurse -Force
+          Copy-Item -Path build/launch.vbs -Destination release/ -Force
+          # Use production .env
+          Copy-Item -Path build/.env.production -Destination release/app/.env -Force
+          # Create and migrate SQLite database
+          New-Item -ItemType File -Path release/app/database/database.sqlite -Force | Out-Null
           php release/app/artisan migrate --force
-          :: Remove local build files from release
-          rmdir /S /Q release/app/node_modules
-          rmdir /S /Q release/app/build
-          rmdir /S /Q release/app/.git
+          # Remove local build files from release
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue release/app/node_modules, release/app/build, release/app/.git
 
       - name: Download Portable PHP for Windows
         run: |
