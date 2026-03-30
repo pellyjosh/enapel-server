@@ -62,8 +62,20 @@ LogMessage "Selected mode: " & modeValue
 LogMessage "Executing: " & cmd
 
 shell.CurrentDirectory = appDir
+
+Dim splashProc
+Set splashProc = Nothing
+If fso.FileExists(appDir & "\scripts\splash.hta") Then
+    Set splashProc = shell.Exec("mshta """ & appDir & "\scripts\splash.hta""")
+End If
+
 On Error Resume Next
 exitCode = shell.Run(cmd, 0, True)
+
+If Not splashProc Is Nothing Then
+    splashProc.Terminate()
+End If
+
 If Err.Number <> 0 Then
     LogMessage "Failed to execute start-server command: " & Err.Description
     MsgBox "Failed to run launcher command." & vbCrLf & vbCrLf & _

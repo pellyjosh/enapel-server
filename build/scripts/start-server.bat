@@ -86,8 +86,7 @@ cd /d "%APP_ROOT%"
 call :detect_listener
 
 if not defined SERVER_PID (
-  call :log "Starting Laravel server on %BIND_HOST%:%PORT%..."
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c', '\"\"%PHP%\" artisan serve --host=%BIND_HOST% --port=%PORT% --no-reload > \"%LOG_DIR%\server.log\" 2>&1\"' -WindowStyle Hidden"
+  call :start_server_background
 ) else (
   call :log "Detected existing listener on port %PORT% (PID %SERVER_PID%)."
   call :log "Reusing existing listener and skipping new server start."
@@ -138,6 +137,20 @@ if not defined SERVER_PID (
     if not defined SERVER_PID set "SERVER_PID=%%P"
   )
 )
+exit /b 0
+
+:start_server_background
+call :log "Starting Laravel server on %BIND_HOST%:%PORT%..."
+set "TMP_BAT=%TEMP%\enapel_serve_%RANDOM%.bat"
+set "TMP_VBS=%TEMP%\enapel_serve_%RANDOM%.vbs"
+echo @echo off > "%TMP_BAT%"
+echo cd /d "%APP_ROOT%" >> "%TMP_BAT%"
+echo "%PHP%" artisan serve --host=%BIND_HOST% --port=%PORT% --no-reload ^> "%LOG_DIR%\server.log" 2^>^&1 >> "%TMP_BAT%"
+echo del "%%~f0" >> "%TMP_BAT%"
+echo Set ws = CreateObject("WScript.Shell"^) > "%TMP_VBS%"
+echo ws.Run """%TMP_BAT%""", 0, False >> "%TMP_VBS%"
+cscript //nologo "%TMP_VBS%"
+del "%TMP_VBS%"
 exit /b 0
 
 :log

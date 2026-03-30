@@ -7,7 +7,7 @@ OutputDir=..\dist
 OutputBaseFilename=enapel-server
 Compression=lzma
 SolidCompression=yes
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
 WizardStyle=modern
 DisableProgramGroupPage=yes
 ArchitecturesAllowed=x64compatible
@@ -27,10 +27,10 @@ Name: "{autodesktop}\Enapel Server"; Filename: "{app}\launch.vbs"
 Name: "{userstartup}\Enapel Background Server"; Filename: "{app}\launch-background.vbs"
 
 [Run]
-Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Microsoft Visual C++ runtime..."; Flags: waituntilterminated runhidden
-Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall add rule name=""Enapel Server 8000"" dir=in action=allow protocol=TCP localport=8000 >nul 2>&1 || exit /b 0"; Flags: runhidden
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Microsoft Visual C++ runtime..."; Flags: waituntilterminated shellexec runhidden; Verb: runas
+Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall add rule name=""Enapel Server 8000"" dir=in action=allow protocol=TCP localport=8000 >nul 2>&1 || exit /b 0"; Flags: runhidden shellexec; Verb: runas
 Filename: "{app}\scripts\init-server.bat"; Flags: runhidden waituntilterminated
 Filename: "{app}\launch.vbs"; Description: "Launch Enapel Server now"; Flags: postinstall shellexec
 
 [UninstallRun]
-Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall delete rule name=""Enapel Server 8000"" >nul 2>&1 || exit /b 0"; Flags: runhidden
+Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall delete rule name=""Enapel Server 8000"" >nul 2>&1 || exit /b 0"; Flags: runhidden shellexec; Verb: runas
