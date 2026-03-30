@@ -28,6 +28,26 @@ $directoriesToCopy = @(
 foreach ($directory in $directoriesToCopy) {
     $source = Join-Path $projectRoot $directory
     $destination = Join-Path $appRoot $directory
+
+    if (-not (Test-Path -LiteralPath $source)) {
+        Write-Host "Skipping missing directory: $source"
+        continue
+    }
+
+    if ($directory -eq 'public') {
+        New-Item -ItemType Directory -Force -Path $destination | Out-Null
+
+        # In CI, public/storage is often a broken symlink (Laravel storage link).
+        # Copy public contents except storage; init-server.bat recreates the link.
+        Get-ChildItem -Path $source -Force |
+            Where-Object { $_.Name -ne 'storage' } |
+            ForEach-Object {
+                Copy-Item -Path $_.FullName -Destination $destination -Recurse -Force
+            }
+
+        continue
+    }
+
     Copy-Item -Path $source -Destination $destination -Recurse -Force
 }
 
