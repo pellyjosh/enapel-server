@@ -87,7 +87,7 @@ call :detect_listener
 
 if not defined SERVER_PID (
   call :log "Starting Laravel server on %BIND_HOST%:%PORT%..."
-  start "" /b "%PHP%" artisan serve --host=%BIND_HOST% --port=%PORT% --no-reload > "%LOG_DIR%\server.log" 2>&1
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c', '\"\"%PHP%\" artisan serve --host=%BIND_HOST% --port=%PORT% --no-reload > \"%LOG_DIR%\server.log\" 2>&1\"' -WindowStyle Hidden"
 ) else (
   call :log "Detected existing listener on port %PORT% (PID %SERVER_PID%)."
   call :log "Reusing existing listener and skipping new server start."
