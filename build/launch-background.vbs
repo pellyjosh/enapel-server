@@ -1,6 +1,6 @@
 Option Explicit
 
-Dim shell, fso, appDir, launcher, modeFile, modeArg, savedMode
+Dim shell, fso, appDir, launcher, modeFile, modeArg, savedMode, modeReader
 
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -12,7 +12,9 @@ modeArg = " --local"
 
 If fso.FileExists(launcher) Then
     If fso.FileExists(modeFile) Then
-        savedMode = LCase(Trim(fso.OpenTextFile(modeFile, 1).ReadAll))
+        Set modeReader = fso.OpenTextFile(modeFile, 1)
+        savedMode = LCase(Trim(modeReader.ReadAll))
+        modeReader.Close
         If savedMode = "network" Then
             modeArg = " --network"
         End If

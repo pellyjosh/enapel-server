@@ -6,6 +6,7 @@ set "APP_ROOT=%ROOT%..\app"
 set "PHP=%ROOT%..\php\php.exe"
 set "LOG_DIR=%ROOT%..\logs"
 set "LOG_FILE=%LOG_DIR%\startup.log"
+set "ENV_REPAIR_SCRIPT=%ROOT%repair-env.ps1"
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
 >> "%LOG_FILE%" echo [%date% %time%] Running init-server.bat...
@@ -21,16 +22,36 @@ if not exist "%APP_ROOT%" (
   exit /b 1
 )
 
+if not exist "%ENV_REPAIR_SCRIPT%" (
+  >> "%LOG_FILE%" echo [%date% %time%] ERROR: Env repair script was not found: "%ENV_REPAIR_SCRIPT%"
+  exit /b 1
+)
+
 cd /d "%APP_ROOT%"
 
 if not exist ".env" (
   >> "%LOG_FILE%" echo [%date% %time%] .env missing. Creating from .env.windows...
   copy /Y ".env.windows" ".env" >nul
+
+  >> "%LOG_FILE%" echo [%date% %time%] Validating .env format...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%ENV_REPAIR_SCRIPT%" -EnvPath "%APP_ROOT%\.env" >> "%LOG_FILE%" 2>&1
+  if errorlevel 1 (
+    >> "%LOG_FILE%" echo [%date% %time%] ERROR: Failed to validate/repair .env format.
+    exit /b 1
+  )
+
   "%PHP%" artisan key:generate --force --ansi >> "%LOG_FILE%" 2>&1
   if errorlevel 1 (
     >> "%LOG_FILE%" echo [%date% %time%] ERROR: artisan key:generate failed.
     exit /b 1
   )
+)
+
+>> "%LOG_FILE%" echo [%date% %time%] Validating .env format...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ENV_REPAIR_SCRIPT%" -EnvPath "%APP_ROOT%\.env" >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+  >> "%LOG_FILE%" echo [%date% %time%] ERROR: Failed to validate/repair .env format.
+  exit /b 1
 )
 
 if not exist "database\database.sqlite" (
