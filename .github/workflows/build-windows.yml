@@ -24,29 +24,12 @@ jobs:
 
       - name: Install NPM Dependencies & Build
         run: |
-          npm install
+          npm ci
           npm run build
 
-      - name: Prepare App Folder
-        run: |
-          New-Item -ItemType Directory -Path release, release/app, release/php, release/scripts -Force | Out-Null
-          Get-ChildItem -Force | Where-Object { $_.Name -ne 'release' } | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination release/app -Recurse -Force
-          }
-          Copy-Item -Path build/scripts/* -Destination release/scripts -Recurse -Force
-          Copy-Item -Path build/launch.vbs -Destination release/ -Force
-          # Use production .env
-          Copy-Item -Path build/.env.production -Destination release/app/.env -Force
-          # Create and migrate SQLite database
-          New-Item -ItemType File -Path release/app/database/database.sqlite -Force | Out-Null
-          php release/app/artisan migrate --force
-          # Remove local build files from release
-          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue release/app/node_modules, release/app/build, release/app/.git
-
-      - name: Download Portable PHP for Windows
-        run: |
-          curl -L https://windows.php.net/downloads/releases/php-8.2.16-Win32-vs16-x64.zip -o php.zip
-          expand-archive -path php.zip -destinationpath release/php
+      - name: Prepare Windows Package
+        shell: pwsh
+        run: .\build\scripts\prepare-package.ps1
 
       - name: Compile Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.7
@@ -56,5 +39,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Enapel-Windows-Installer
-          path: dist/Enapel_Setup.exe
+          name: enapel-server-windows-installer
+          path: dist/enapel-server.exe

@@ -56,6 +56,7 @@ export default function AuthenticatedLayout({ children }) {
         global: [
             { section: 'Overview' },
             { name: 'Dashboard', href: '/dashboard?module=global', icon: '📊', active: true },
+            { name: 'Activity Logs', href: '/activity-logs', icon: '🗒️' },
             { name: 'Analytics & Reports', href: '#', icon: '📈' },
             { section: 'Company Management' },
             { name: 'Staff & HR', href: '#', icon: '👥' },

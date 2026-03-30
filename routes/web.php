@@ -142,6 +142,9 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
             return view('sync.Sync_useractivity');
         })->name('sync_users');
     });
+
+    Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('/activity-logs/download', [App\Http\Controllers\ActivityLogController::class, 'download'])->name('activity-logs.download');
     // Pharmacy Module
     Route::get('/pharmacy/dashboard', [\App\Http\Controllers\PharmacyController::class, 'dashboard'])->name('pharmacy.dashboard');
     Route::get('/pharmacy/catalog', [\App\Http\Controllers\PharmacyController::class, 'catalog'])->name('pharmacy.catalog');

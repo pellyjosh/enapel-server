@@ -8,6 +8,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::middleware('auth:sanctum')->post('/activity-logs', [App\Http\Controllers\Api\ActivityLogController::class, 'store']);
+
 Route::prefix('v1')->group(base_path('routes/api/api_v1.php'));
 
 // ─── License validation proxy (avoids browser CORS issues) ────────────────────
