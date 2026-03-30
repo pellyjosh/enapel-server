@@ -31,10 +31,9 @@ foreach ($line in $lines) {
         continue
     }
 
-    # Dotenv requires quoted values when spaces exist.
     if ($value -match '\s' -and $value -notmatch '^\s*".*"\s*$' -and $value -notmatch "^\s*'.*'\s*$") {
         $escaped = $value.Replace('"', '\"')
-        $current = "$key=\"$escaped\""
+        $current = $key + '="' + $escaped + '"'
         $changed = $true
     }
 
