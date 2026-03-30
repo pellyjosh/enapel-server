@@ -28,9 +28,9 @@ Name: "{userstartup}\Enapel Background Server"; Filename: "{app}\launch-backgrou
 
 [Run]
 Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Microsoft Visual C++ runtime..."; Flags: waituntilterminated runhidden
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Enapel Server 8000"" dir=in action=allow protocol=TCP localport=8000"; Flags: runhidden ignoreerrors
+Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall add rule name=""Enapel Server 8000"" dir=in action=allow protocol=TCP localport=8000 >nul 2>&1 || exit /b 0"; Flags: runhidden
 Filename: "{app}\scripts\init-server.bat"; Flags: runhidden waituntilterminated
 Filename: "{app}\launch.vbs"; Description: "Launch Enapel Server now"; Flags: postinstall shellexec
 
 [UninstallRun]
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""Enapel Server 8000"""; Flags: runhidden ignoreerrors
+Filename: "{cmd}"; Parameters: "/C netsh advfirewall firewall delete rule name=""Enapel Server 8000"" >nul 2>&1 || exit /b 0"; Flags: runhidden
