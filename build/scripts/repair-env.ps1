@@ -1,9 +1,9 @@
-$ErrorActionPreference = 'Stop'
-
 param(
     [Parameter(Mandatory = $true)]
     [string]$EnvPath
 )
+
+$ErrorActionPreference = 'Stop'
 
 if (-not (Test-Path -LiteralPath $EnvPath)) {
     Write-Host "[repair-env] .env file not found: $EnvPath"
