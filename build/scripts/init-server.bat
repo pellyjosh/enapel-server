@@ -59,6 +59,12 @@ if not exist "database\database.sqlite" (
   type nul > "database\database.sqlite"
 )
 
+>> "%LOG_FILE%" echo [%date% %time%] Ensuring framework directories exist...
+if not exist "storage\framework\views" mkdir "storage\framework\views" >nul 2>&1
+if not exist "storage\framework\sessions" mkdir "storage\framework\sessions" >nul 2>&1
+if not exist "storage\framework\cache\data" mkdir "storage\framework\cache\data" >nul 2>&1
+if not exist "bootstrap\cache" mkdir "bootstrap\cache" >nul 2>&1
+
 if not exist "public\storage" (
   >> "%LOG_FILE%" echo [%date% %time%] Creating storage symlink...
   "%PHP%" artisan storage:link >> "%LOG_FILE%" 2>&1

@@ -20,6 +20,7 @@ $directoriesToCopy = @(
     'config',
     'database',
     'public',
+    'resources',
     'routes',
     'storage',
     'vendor'

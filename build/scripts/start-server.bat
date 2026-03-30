@@ -11,11 +11,13 @@ set "OPEN_BROWSER=1"
 set "NETWORK_MODE=0"
 set "BIND_HOST=127.0.0.1"
 set "BROWSER_URL=http://127.0.0.1:%PORT%"
-set "SERVER_RUNNING="
-set "EXISTING_LOCAL_ADDR="
 set "WAIT_COUNT=0"
-set "WAIT_MAX=20"
-set "LAN_IP="
+set "WAIT_MAX=30"
+set "SCRIPT_VERSION=2026-03-30.2"
+set "LOCK_ROOT=%ROOT%..\run"
+set "LOCK_DIR=%LOCK_ROOT%\start-server.lock"
+set "SERVER_PID="
+set "EXIT_CODE=0"
 
 :parse_args
 if "%~1"=="" goto args_done
@@ -26,101 +28,118 @@ shift
 goto parse_args
 
 :args_done
-if "%NETWORK_MODE%"=="1" set "BIND_HOST=0.0.0.0"
+if "%NETWORK_MODE%"=="1" (
+  set "BIND_HOST=0.0.0.0"
+)
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
->> "%LOG_FILE%" echo.
->> "%LOG_FILE%" echo ==================================================
->> "%LOG_FILE%" echo [%date% %time%] Launch request received.
+call :log ""
+call :log "=================================================="
+call :log "Launch request received."
+call :log "start-server.bat version: %SCRIPT_VERSION%"
+
+if not exist "%LOCK_ROOT%" mkdir "%LOCK_ROOT%" >nul 2>&1
+2>nul mkdir "%LOCK_DIR%"
+if errorlevel 1 (
+  call :log "Another startup sequence is already in progress. Exiting this request."
+  exit /b 0
+)
+
+call :main
+set "EXIT_CODE=%ERRORLEVEL%"
+
+rmdir "%LOCK_DIR%" >nul 2>&1
+exit /b %EXIT_CODE%
+
+:main
 
 if "%NETWORK_MODE%"=="1" (
-  >> "%LOG_FILE%" echo [%date% %time%] Requested startup mode: NETWORK (LAN exposed).
+  call :log "Requested startup mode: NETWORK (LAN exposed)."
 ) else (
-  >> "%LOG_FILE%" echo [%date% %time%] Requested startup mode: LOCAL (this PC only).
+  call :log "Requested startup mode: LOCAL (this PC only)."
 )
 
 if not exist "%APP_ROOT%" (
-  >> "%LOG_FILE%" echo [%date% %time%] ERROR: App directory not found: "%APP_ROOT%"
+  call :log "ERROR: App directory not found: %APP_ROOT%"
   exit /b 1
 )
 
 if not exist "%PHP%" (
-  >> "%LOG_FILE%" echo [%date% %time%] ERROR: PHP executable not found: "%PHP%"
+  call :log "ERROR: PHP executable not found: %PHP%"
   exit /b 1
 )
 
-call "%ROOT%init-server.bat" >> "%LOG_FILE%" 2>&1
+if not exist "%APP_ROOT%\artisan" (
+  call :log "ERROR: artisan entry point not found: %APP_ROOT%\artisan"
+  exit /b 1
+)
+
+call "%ROOT%init-server.bat"
 set "INIT_EXIT=%ERRORLEVEL%"
 if not "%INIT_EXIT%"=="0" (
-  >> "%LOG_FILE%" echo [%date% %time%] ERROR: init-server failed with exit code %INIT_EXIT%.
+  call :log "ERROR: init-server failed with exit code %INIT_EXIT%."
   exit /b %INIT_EXIT%
 )
 
 cd /d "%APP_ROOT%"
 
+call :detect_listener
+
+if not defined SERVER_PID (
+  call :log "Starting Laravel server on %BIND_HOST%:%PORT%..."
+  start "" /b "%PHP%" artisan serve --host=%BIND_HOST% --port=%PORT% --no-reload > "%LOG_DIR%\server.log" 2>&1
+) else (
+  call :log "Detected existing listener on port %PORT% (PID %SERVER_PID%)."
+  call :log "Reusing existing listener and skipping new server start."
+)
+
+:wait_for_server
+call :detect_listener
+
+if defined SERVER_PID goto server_ready
+
+set /a WAIT_COUNT+=1
+if !WAIT_COUNT! GEQ !WAIT_MAX! (
+  call :log "ERROR: Server did not start listening on port %PORT% after %WAIT_MAX% seconds."
+  call :log "Port diagnostics for %PORT%:"
+  for /f "usebackq delims=" %%L in (`netstat -ano ^| findstr /R /C:":%PORT% "`) do (
+    call :log "  %%L"
+  )
+  exit /b 1
+)
+
+timeout /t 1 /nobreak >nul
+goto wait_for_server
+
+:server_ready
+call :log "Server is listening on port %PORT% (PID %SERVER_PID%)."
+
 if "%NETWORK_MODE%"=="1" (
-  for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "$ip=(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue ^| Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254*' -and $_.PrefixOrigin -ne 'WellKnown' } ^| Select-Object -First 1 -ExpandProperty IPAddress); if($ip){Write-Output $ip}"`) do (
-    if not defined LAN_IP set "LAN_IP=%%I"
-  )
-
-  if defined LAN_IP (
-    set "BROWSER_URL=http://!LAN_IP!:%PORT%"
-    >> "%LOG_FILE%" echo [%date% %time%] LAN access URL: http://!LAN_IP!:%PORT%
-  ) else (
-    >> "%LOG_FILE%" echo [%date% %time%] WARNING: Could not detect LAN IP. Using localhost in browser.
-  )
-)
-
-for /f "tokens=1,2,3,4,5" %%A in ('netstat -ano ^| findstr /R /C:"TCP .*:%PORT% .*LISTENING"') do (
-  if not defined SERVER_RUNNING set "SERVER_RUNNING=1"
-  if not defined EXISTING_LOCAL_ADDR set "EXISTING_LOCAL_ADDR=%%B"
-)
-
-if defined SERVER_RUNNING if "%NETWORK_MODE%"=="1" (
-  echo !EXISTING_LOCAL_ADDR! | findstr /I /C:"0.0.0.0:%PORT%" /C:"[::]:%PORT%" >nul
-  if errorlevel 1 (
-    >> "%LOG_FILE%" echo [%date% %time%] ERROR: Port %PORT% is already listening on !EXISTING_LOCAL_ADDR!.
-    >> "%LOG_FILE%" echo [%date% %time%] ERROR: That is not LAN-exposed mode. Stop the existing server and relaunch in Network Mode.
-    exit /b 2
-  )
-)
-
-if not defined SERVER_RUNNING (
-  >> "%LOG_FILE%" echo [%date% %time%] Starting Laravel server on %BIND_HOST%:%PORT%...
-  start /b "" "%PHP%" artisan serve --host=%BIND_HOST% --port=%PORT% >> "%LOG_FILE%" 2>&1
-  :wait_for_server
-  timeout /t 1 /nobreak >nul
-  set /a WAIT_COUNT+=1
-  set "SERVER_RUNNING="
-  set "EXISTING_LOCAL_ADDR="
-  for /f "tokens=1,2,3,4,5" %%A in ('netstat -ano ^| findstr /R /C:"TCP .*:%PORT% .*LISTENING"') do (
-    if not defined SERVER_RUNNING set "SERVER_RUNNING=1"
-    if not defined EXISTING_LOCAL_ADDR set "EXISTING_LOCAL_ADDR=%%B"
-  )
-  if not defined SERVER_RUNNING if !WAIT_COUNT! LSS !WAIT_MAX! goto wait_for_server
-
-  if not defined SERVER_RUNNING (
-    >> "%LOG_FILE%" echo [%date% %time%] ERROR: Server did not start listening on port %PORT% after %WAIT_MAX% seconds.
-    exit /b 1
-  )
-)
-
-if defined SERVER_RUNNING (
-  if defined EXISTING_LOCAL_ADDR (
-    >> "%LOG_FILE%" echo [%date% %time%] Server is listening at !EXISTING_LOCAL_ADDR!.
-  ) else (
-    >> "%LOG_FILE%" echo [%date% %time%] Server is listening on port %PORT%.
-  )
-)
-
-if "%NETWORK_MODE%"=="1" if defined LAN_IP (
-  >> "%LOG_FILE%" echo [%date% %time%] Remote devices on the same network can use: http://!LAN_IP!:%PORT%
+  call :log "Network mode enabled. Remote devices can use this machine IP on port %PORT%."
 )
 
 if "%OPEN_BROWSER%"=="1" (
-  >> "%LOG_FILE%" echo [%date% %time%] Opening browser at !BROWSER_URL! ...
-  start "" "!BROWSER_URL!"
+  call :log "Opening browser at %BROWSER_URL% ..."
+  start "" "%BROWSER_URL%"
 )
 
->> "%LOG_FILE%" echo [%date% %time%] Launch sequence completed.
+call :log "Launch sequence completed."
+exit /b 0
+
+:detect_listener
+set "SERVER_PID="
+
+for /f "usebackq delims=" %%P in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$p=Get-NetTCPConnection -State Listen -LocalPort %PORT% -ErrorAction SilentlyContinue ^| Select-Object -First 1 -ExpandProperty OwningProcess; if($p){$p}"`) do (
+  if not defined SERVER_PID set "SERVER_PID=%%P"
+)
+
+if not defined SERVER_PID (
+  for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:":%PORT% .*LISTENING"') do (
+    if not defined SERVER_PID set "SERVER_PID=%%P"
+  )
+)
+exit /b 0
+
+:log
+>> "%LOG_FILE%" echo [%date% %time%] %~1
 exit /b 0

@@ -1,6 +1,6 @@
 Option Explicit
 
-Dim shell, fso, appDir, launcher, modeFile, modeArg, savedMode, modeReader
+Dim shell, fso, appDir, launcher, modeFile, modeArg, savedMode, modeReader, cmd
 
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -21,7 +21,8 @@ If fso.FileExists(launcher) Then
     End If
 
     shell.CurrentDirectory = appDir
-    shell.Run """" & launcher & """ --no-browser" & modeArg, 0, False
+    cmd = "cmd /c """"" & launcher & """" & modeArg & " --no-browser"""
+    shell.Run cmd, 0, False
 End If
 
 Set fso = Nothing
