@@ -2,60 +2,62 @@ name: Build Windows Installer
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["main", "master"]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, bcmath, zip
-        coverage: none
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, bcmath, zip
+          coverage: none
 
-    - name: Install Composer Dependencies
-      run: composer install --no-ansi --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
 
-    - name: Install NPM Dependencies & Build
-      run: |
-        npm install
-        npm run build
+      - name: Install NPM Dependencies & Build
+        run: |
+          npm install
+          npm run build
 
-    - name: Prepare App Folder
-      run: |
-        mkdir release
-        mkdir release/app
-        mkdir release/php
-        mkdir release/scripts
-        xcopy /E /I /Y . release/app
-        xcopy /E /I /Y build/scripts release/scripts
-        copy build/launch.vbs release/
-        :: Use production .env
-        copy build/.env.production release/app/.env
-        :: Create and migrate SQLite database
-        type nul > release/app/database/database.sqlite
-        php release/app/artisan migrate --force
-        :: Remove local build files from release
-        rmdir /S /Q release/app/node_modules
-        rmdir /S /Q release/app/build
-        rmdir /S /Q release/app/.git
+      - name: Prepare App Folder
+        run: |
+          mkdir release
+          mkdir release/app
+          mkdir release/php
+          mkdir release/scripts
+          xcopy /E /I /Y . release/app
+          xcopy /E /I /Y build/scripts release/scripts
+          copy build/launch.vbs release/
+          :: Use production .env
+          copy build/.env.production release/app/.env
+          :: Create and migrate SQLite database
+          type nul > release/app/database/database.sqlite
+          php release/app/artisan migrate --force
+          :: Remove local build files from release
+          rmdir /S /Q release/app/node_modules
+          rmdir /S /Q release/app/build
+          rmdir /S /Q release/app/.git
 
-    - name: Download Portable PHP for Windows
-      run: |
-        curl -L https://windows.php.net/downloads/releases/php-8.2.16-Win32-vs16-x64.zip -o php.zip
-        expand-archive -path php.zip -destinationpath release/php
+      - name: Download Portable PHP for Windows
+        run: |
+          curl -L https://windows.php.net/downloads/releases/php-8.2.16-Win32-vs16-x64.zip -o php.zip
+          expand-archive -path php.zip -destinationpath release/php
 
-    - name: Compile Installer
-      uses: AykutSarac/iscc-action@v2
-      with:
-        filepath: build/installer.iss
+      - name: Compile Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.7
+        with:
+          path: build/installer.iss
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Enapel-Windows-Installer
-        path: dist/Enapel_Setup.exe
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Enapel-Windows-Installer
+          path: dist/Enapel_Setup.exe

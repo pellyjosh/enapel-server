@@ -17,6 +17,11 @@ class Sales extends Model
         return $this->belongsTo(Receipt::class);
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Inventory::class, 'product_id');
+    }
+
     public function booking()
     {
         return $this->belongsTo(Booking::class);

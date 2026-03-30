@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Route;
 // ─── Public routes ────────────────────────────────────────────────────────
 Route::get('/', function () {
     return view('auth.login');
-})->name('login');
+});
 
 // License invalid / not configured screen
 Route::get('/license-required', function () {
-    return view('license.required');
+    return \Inertia\Inertia::render('LicenseRequired');
 })->name('license.required');
 
 Route::post('/license-required/configure', function (\Illuminate\Http\Request $request) {
@@ -64,8 +64,22 @@ Route::post('/license-required/configure', function (\Illuminate\Http\Request $r
 
 // ─── Authenticated + license-validated routes ──────────────────────────────
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'validate.license'])->name('dashboard');
+    $businessTypes = app(\App\Services\LicenseService::class)->get('tenant.business_types', []);
+
+    // Some minor normalization since the cloud sends 'supermarket' but the dashboard checks 'supermart'
+    if (in_array('supermarket', $businessTypes) && !in_array('supermart', $businessTypes)) {
+        $businessTypes[] = 'supermart';
+    }
+
+    $metrics = app(\App\Services\DashboardService::class)->getMetrics($businessTypes);
+
+    return \Inertia\Inertia::render('Dashboard', [
+        'metrics' => $metrics,
+        // Don't pass enabledModules here, let it fall back to HandleInertiaRequests 
+        // OR pass the newly normalized businessTypes
+        'enabledModules' => $businessTypes,
+    ]);
+})->middleware(['auth', 'validate.license'])->name('dashboard');
 
 Route::middleware(['auth', 'validate.license'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -92,6 +106,7 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
     Route::get('/finance', [FinanceController::class, 'DailyFinance'])->name('finance');
 
     Route::get('/sales', [SalesController::class, 'getSales'])->name('sales');
+    Route::post('/checkout', [SalesController::class, 'checkout'])->name('checkout');
 
     Route::get('/purchases', [SupplyController::class, 'getPurchase'])->name('purchases');
 
@@ -105,9 +120,9 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
         return view('user.form.expenseform');
     })->name('expenses');
 
-    Route::get('/devices', function () {
-        return view('user.devices.device');
-    })->name('devices');
+    // Global Settings -> Terminals
+    Route::get('/global/settings/terminals', [\App\Http\Controllers\TerminalController::class, 'index'])->name('global.settings.terminals');
+    Route::post('/global/settings/terminals/{device}/toggle', [\App\Http\Controllers\TerminalController::class, 'toggleStatus'])->name('global.settings.terminals.toggle');
 
     Route::get('/user_activity', function () {
         return view('user.reports.useractivity');
@@ -127,9 +142,58 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
             return view('sync.Sync_useractivity');
         })->name('sync_users');
     });
+    // Pharmacy Module
+    Route::get('/pharmacy/dashboard', [\App\Http\Controllers\PharmacyController::class, 'dashboard'])->name('pharmacy.dashboard');
+    Route::get('/pharmacy/catalog', [\App\Http\Controllers\PharmacyController::class, 'catalog'])->name('pharmacy.catalog');
+    Route::post('/pharmacy/catalog', [\App\Http\Controllers\PharmacyController::class, 'storeDrug'])->name('pharmacy.catalog.store');
+    Route::put('/pharmacy/catalog/{id}', [\App\Http\Controllers\PharmacyController::class, 'updateDrug'])->name('pharmacy.catalog.update');
+    Route::delete('/pharmacy/catalog/{id}', [\App\Http\Controllers\PharmacyController::class, 'deleteDrug'])->name('pharmacy.catalog.delete');
+    Route::get('/pharmacy/pos', [\App\Http\Controllers\PharmacyController::class, 'pos'])->name('pharmacy.pos');
+    Route::get('/pharmacy/prescriptions', [\App\Http\Controllers\PharmacyController::class, 'prescriptions'])->name('pharmacy.prescriptions');
+    Route::post('/pharmacy/prescriptions', [\App\Http\Controllers\PharmacyController::class, 'storePrescription'])->name('pharmacy.prescriptions.store');
+    Route::post('/pharmacy/prescriptions/{id}/dispense', [\App\Http\Controllers\PharmacyController::class, 'dispensePrescription'])->name('pharmacy.prescriptions.dispense');
+    Route::put('/pharmacy/prescriptions/{id}', [\App\Http\Controllers\PharmacyController::class, 'updatePrescription'])->name('pharmacy.prescriptions.update');
+    Route::delete('/pharmacy/prescriptions/{id}', [\App\Http\Controllers\PharmacyController::class, 'deletePrescription'])->name('pharmacy.prescriptions.delete');
+    Route::get('/pharmacy/sales', [\App\Http\Controllers\PharmacyController::class, 'sales'])->name('pharmacy.sales');
+    Route::get('/pharmacy/stock', [\App\Http\Controllers\PharmacyController::class, 'stock'])->name('pharmacy.stock');
+    Route::put('/pharmacy/stock/{id}', [\App\Http\Controllers\PharmacyController::class, 'updateStock'])->name('pharmacy.stock.update');
+    Route::get('/pharmacy/alerts', [\App\Http\Controllers\PharmacyController::class, 'alerts'])->name('pharmacy.alerts');
+    Route::get('/pharmacy/suppliers', [\App\Http\Controllers\PharmacyController::class, 'suppliers'])->name('pharmacy.suppliers');
+    Route::get('/pharmacy/orders', [\App\Http\Controllers\PharmacyController::class, 'orders'])->name('pharmacy.orders');
+
+    // Supermart Module
+    Route::get('/supermart/dashboard', [\App\Http\Controllers\SupermartController::class, 'dashboard'])->name('supermart.dashboard');
+    Route::get('/supermart/catalog', [\App\Http\Controllers\SupermartController::class, 'catalog'])->name('supermart.catalog');
+    Route::post('/supermart/catalog', [\App\Http\Controllers\SupermartController::class, 'storeProduct'])->name('supermart.catalog.store');
+    Route::put('/supermart/catalog/{id}', [\App\Http\Controllers\SupermartController::class, 'updateProduct'])->name('supermart.catalog.update');
+    Route::delete('/supermart/catalog/{id}', [\App\Http\Controllers\SupermartController::class, 'deleteProduct'])->name('supermart.catalog.delete');
+    Route::get('/supermart/pos', [\App\Http\Controllers\SupermartController::class, 'pos'])->name('supermart.pos');
+    Route::get('/supermart/orders', [\App\Http\Controllers\SupermartController::class, 'orders'])->name('supermart.orders');
+    Route::get('/supermart/categories', [\App\Http\Controllers\SupermartController::class, 'categories'])->name('supermart.categories');
+    Route::post('/supermart/categories', [\App\Http\Controllers\SupermartController::class, 'storeCategory'])->name('supermart.categories.store');
+    Route::put('/supermart/categories/{category}', [\App\Http\Controllers\SupermartController::class, 'updateCategory'])->name('supermart.categories.update');
+    Route::delete('/supermart/categories/{category}', [\App\Http\Controllers\SupermartController::class, 'deleteCategory'])->name('supermart.categories.delete');
+    Route::get('/supermart/stock', [\App\Http\Controllers\SupermartController::class, 'stock'])->name('supermart.stock');
+    Route::put('/supermart/stock/{id}', [\App\Http\Controllers\SupermartController::class, 'updateStock'])->name('supermart.stock.update');
+    Route::get('/supermart/suppliers', [\App\Http\Controllers\SupermartController::class, 'suppliers'])->name('supermart.suppliers');
+    Route::get('/supermart/invoices', [\App\Http\Controllers\SupermartController::class, 'invoices'])->name('supermart.invoices');
+    Route::get('/supermart/reports', [\App\Http\Controllers\SupermartController::class, 'reports'])->name('supermart.reports');
+
+    // Hotel Module
+    Route::get('/hotel/dashboard', [\App\Http\Controllers\HotelController::class, 'dashboard'])->name('hotel.dashboard');
+    Route::get('/hotel/bookings', [\App\Http\Controllers\HotelController::class, 'bookings'])->name('hotel.bookings');
+    Route::post('/hotel/bookings', [\App\Http\Controllers\HotelController::class, 'storeBooking'])->name('hotel.bookings.store');
+    Route::get('/hotel/guests', [\App\Http\Controllers\HotelController::class, 'guests'])->name('hotel.guests');
+    Route::post('/hotel/guests', [\App\Http\Controllers\HotelController::class, 'storeGuest'])->name('hotel.guests.store');
+    Route::get('/hotel/rooms', [\App\Http\Controllers\HotelController::class, 'rooms'])->name('hotel.rooms');
+    Route::post('/hotel/rooms', [\App\Http\Controllers\HotelController::class, 'storeRoom'])->name('hotel.rooms.store');
+    Route::get('/hotel/housekeeping', [\App\Http\Controllers\HotelController::class, 'housekeeping'])->name('hotel.housekeeping');
+    Route::post('/hotel/housekeeping/{id}', [\App\Http\Controllers\HotelController::class, 'updateHousekeeping'])->name('hotel.housekeeping.update');
+    Route::get('/hotel/roomservice', [\App\Http\Controllers\HotelController::class, 'roomService'])->name('hotel.roomservice');
+    Route::post('/hotel/roomservice', [\App\Http\Controllers\HotelController::class, 'storeRoomService'])->name('hotel.roomservice.store');
+    Route::get('/hotel/invoices', [\App\Http\Controllers\HotelController::class, 'invoices'])->name('hotel.invoices');
+    Route::get('/hotel/reports', [\App\Http\Controllers\HotelController::class, 'reports'])->name('hotel.reports');
+    Route::get('/hotel/settings', [\App\Http\Controllers\HotelController::class, 'settings'])->name('hotel.settings');
 });
-
-
-
 
 require __DIR__ . '/auth.php';

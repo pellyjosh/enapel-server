@@ -31,7 +31,7 @@
                             <div class="card">
                                 <div class="card-body p-0 bg-black auth-header-box rounded-top">
                                     <div class="text-center p-0">
-                                        <a href="index.html" class="logo logo-admin">
+                                        <a href="{{ route('dashboard') }}" class="logo logo-admin">
                                             <img src="{{ asset('assets/images/logo_green.png') }}" loading="lazy"
                                                 style="width: 240px; height: auto;" alt="logo" class="auth-logo">
                                         </a>
@@ -132,33 +132,36 @@
                 $('#validateLicense').prop('disabled', true).text('Validating...');
 
                 $.ajax({
-                    url: 'http://192.168.0.200:8000/api/v1/license_key',
+                    url: '{{ config('license.cloud_url') }}/api/v1/license/validate',
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
                     data: JSON.stringify({
-                        license_key: licenseKey
+                        license_key: licenseKey,
+                        terminal_identifier: '{{ config('license.terminal_id') ?: (string) \Illuminate\Support\Str::uuid() }}',
+                        terminal_name: 'Initial Setup'
                     }),
                     success: function(response) {
-                        if (response.message === 'License key is active') {
-                            $('#licenseStatus').html('<span class="text-success">✅ ' + response
-                                .message + '</span>');
+                        if (response.valid === true) {
+                            $('#licenseStatus').html(
+                                '<span class="text-success">✅ License Validated Successfully</span>'
+                            );
 
-                            $('#userpassword, #password_confirmation, #loginButton')
+                            $('#userpassword, #password_confirmation, #loginButton, #email')
                                 .prop('disabled', false);
 
-                            // Set the value of the disabled email field and keep it visible
-                            $('#email').val(response.data.email); // Populate email field
-                            // Set the value of the hidden email field for submission
-                            $('#hidden_email').val(response.data
-                                .email); // Populate hidden email field
+                            // Set values from tenant data
+                            $('#email').val(response.tenant.owner_email);
+                            $('#hidden_email').val(response.tenant.owner_email);
 
-                            $('#module').val(response.data.module);
-                            $('#name').val(response.data.name);
-                            $('#business_name').val(response.data.company_name);
-                            $('#logo').val(response.data.logo);
+                            // Map hidden fields
+                            $('#name').val(response.tenant.owner_name);
+                            $('#business_name').val(response.tenant.name);
+                            $('#logo').val(response.tenant.company_logo_url);
+                            $('#module').val(response.modules.join(
+                                ',')); // Joining modules array
                         } else {
                             $('#licenseStatus').html('<span class="text-warning">⚠️ ' + response
                                 .message + '</span>');

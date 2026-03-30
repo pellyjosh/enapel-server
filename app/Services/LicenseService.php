@@ -33,8 +33,8 @@ class LicenseService
         return $this->normalizePayload(
             Cache::remember(
                 self::CACHE_KEY,
-                now()->addHours(config('license.grace_hours', 24)),
-                fn () => $this->fetchFromCloud()
+                now()->addHours((int) config('license.grace_hours', 24)),
+                fn() => $this->fetchFromCloud()
             )
         );
     }
@@ -51,7 +51,7 @@ class LicenseService
         Cache::put(
             self::CACHE_KEY,
             $payload,
-            now()->addHours(config('license.grace_hours', 24))
+            now()->addHours((int) config('license.grace_hours', 24))
         );
 
         return $this->normalizePayload($payload);
@@ -153,7 +153,6 @@ class LicenseService
                 $body['reason']  ?? 'cloud_rejected',
                 $body['message'] ?? 'License validation failed.'
             );
-
         } catch (\Throwable $e) {
             Log::error('LicenseService: Cloud unreachable.', ['error' => $e->getMessage()]);
 

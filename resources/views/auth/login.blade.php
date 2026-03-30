@@ -37,7 +37,7 @@
                             <div class="card">
                                 <div class="card-body p-0 bg-black auth-header-box rounded-top">
                                     <div class="text-center p-0">
-                                        <a href="index.html" class="logo logo-admin">
+                                        <a href="{{ route('dashboard') }}" class="logo logo-admin">
                                             <img src="{{ asset('assets/images/logo_green.png') }}" loading="lazy"
                                                 style="width: 240px; height: auto;" alt="logo" class="auth-logo">
                                         </a>
@@ -89,12 +89,12 @@
                                                             class="fas fa-sign-in-alt ms-1"></i></button>
                                                 </div>
                                             </div><!--end col-->
-                                        </div> <!- </form>
-                                            <div class="text-center  mb-2">
-                                                <p class="text-muted">Don't have an account ? <a
-                                                        href="{{ route('register') }}"
-                                                        class="text-primary ms-2">Register</a></p>
-                                            </div>
+                                        </div>
+                                    </form>
+                                    <div class="text-center mb-2">
+                                        <p class="text-muted">Don't have an account ? <a href="{{ route('register') }}"
+                                                class="text-primary ms-2">Register</a></p>
+                                    </div>
 
                                 </div><!--end card-body-->
                             </div><!--end card-->
