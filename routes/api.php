@@ -20,11 +20,13 @@ Route::post('/license/validate-key', function (Request $request) {
     $terminalId = config('license.terminal_id') ?: (string) \Illuminate\Support\Str::uuid();
 
     try {
-        $response = Http::timeout(10)->post("{$cloudUrl}/api/v1/license/validate", [
-            'license_key'         => strtoupper(trim($request->license_key)),
-            'terminal_identifier' => $terminalId,
-            'terminal_name'       => 'Initial Setup',
-        ]);
+        $response = Http::timeout(10)
+            ->withoutVerifying()
+            ->post("{$cloudUrl}/api/v1/license/validate", [
+                'license_key'         => strtoupper(trim($request->license_key)),
+                'terminal_identifier' => $terminalId,
+                'terminal_name'       => 'Initial Setup',
+            ]);
 
         return response()->json($response->json(), $response->status());
     } catch (\Throwable $e) {

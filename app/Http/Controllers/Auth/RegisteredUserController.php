@@ -78,11 +78,13 @@ class RegisteredUserController extends Controller
             }
 
             if (!$licenseData || ($licenseData['valid'] ?? false) !== true) {
-                $response = Http::timeout(10)->post("{$cloudUrl}/api/v1/license/validate", [
-                    'license_key'         => $licenseKey,
-                    'terminal_identifier' => $terminalId,
-                    'terminal_name'       => 'Initial Setup',
-                ]);
+                $response = Http::timeout(10)
+                    ->withoutVerifying()
+                    ->post("{$cloudUrl}/api/v1/license/validate", [
+                        'license_key'         => $licenseKey,
+                        'terminal_identifier' => $terminalId,
+                        'terminal_name'       => 'Initial Setup',
+                    ]);
 
                 if (!$response->successful() || ($response->json()['valid'] ?? false) !== true) {
                     $error = $response->json()['message'] ?? 'License validation failed.';
@@ -122,7 +124,9 @@ class RegisteredUserController extends Controller
             $fileName = 'logos/default_logo.png';
             if ($logoUrl) {
                 try {
-                    $imageContent = Http::timeout(5)->get($logoUrl);
+                    $imageContent = Http::timeout(5)
+                        ->withoutVerifying()
+                        ->get($logoUrl);
                     if ($imageContent->successful()) {
                         $fileName = 'logos/' . uniqid() . '.jpg';
                         Storage::put($fileName, $imageContent->body());
