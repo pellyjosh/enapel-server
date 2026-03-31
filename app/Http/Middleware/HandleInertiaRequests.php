@@ -55,7 +55,10 @@ class HandleInertiaRequests extends Middleware
             },
             'enabledModules' => function () {
                 try {
-                    $types = app(\App\Services\LicenseService::class)->get('tenant.business_types', []);
+                    $types = app(\App\Services\LicenseService::class)->get('modules', []);
+                    if (is_string($types)) {
+                        $types = explode(',', $types);
+                    }
                     if (in_array('supermarket', $types) && !in_array('supermart', $types)) {
                         $types[] = 'supermart';
                     }

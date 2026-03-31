@@ -14,4 +14,8 @@ class CompanyProfile extends Model
         'logo',
         'modules',
     ];
+
+    protected $casts = [
+        'modules' => 'array',
+    ];
 }

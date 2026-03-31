@@ -38,10 +38,9 @@ foreach ($directory in $directoriesToCopy) {
     if ($directory -eq 'public') {
         New-Item -ItemType Directory -Force -Path $destination | Out-Null
 
-        # In CI, public/storage is often a broken symlink (Laravel storage link).
-        # Copy public contents except storage; init-server.bat recreates the link.
+        # Copy public contents except storage and hot (which triggers Vite dev mode)
         Get-ChildItem -Path $source -Force |
-            Where-Object { $_.Name -ne 'storage' } |
+            Where-Object { $_.Name -ne 'storage' -and $_.Name -ne 'hot' } |
             ForEach-Object {
                 Copy-Item -Path $_.FullName -Destination $destination -Recurse -Force
             }

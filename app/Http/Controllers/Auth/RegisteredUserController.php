@@ -64,7 +64,7 @@ class RegisteredUserController extends Controller
                 'license_key' => ['required', 'string'],
                 'business_name' => ['required', 'string', 'max:255'],
                 'logo' => ['nullable', 'string'],
-                'module' => ['nullable', 'string'],
+                'module' => ['nullable'], // Allow any format, handle normalization later
             ]);
 
             $licenseKey = strtoupper(trim($request->license_key));
@@ -137,12 +137,20 @@ class RegisteredUserController extends Controller
             }
 
             Log::info('Register: About to create CompanyProfile', ['email' => $email]);
-            // Create and save company profile
+            $rawModules = $licenseData['modules'] ?? $request->module;
+            if (is_array($rawModules)) {
+                $modules = $rawModules;
+            } elseif (is_string($rawModules)) {
+                $modules = explode(',', $rawModules);
+            } else {
+                $modules = [];
+            }
+
             CompanyProfile::create([
                 'name' => $licenseData['tenant']['name'] ?? $request->business_name,
                 'email' => $email,
                 'logo' => $fileName,
-                'modules' => json_encode($licenseData['modules'] ?? explode(',', $request->module ?: '')),
+                'modules' => $modules,
             ]);
             Log::info('Register: CompanyProfile created successfully');
 
