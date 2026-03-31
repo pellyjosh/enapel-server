@@ -63,24 +63,46 @@ class HandleInertiaRequests extends Middleware
             },
             'enabledModules' => function () {
                 try {
-                    $types = app(\App\Services\LicenseService::class)->get('modules', []);
+                    // 1. Try local database first (synced during activation)
+                    $profile = \App\Models\CompanyProfile::first();
+                    $types = $profile ? $profile->modules : null;
                     
-                    // Normalize to array if it's a string (comma-separated)
+                    // 2. Fallback to Cloud/Cache service
+                    if (empty($types)) {
+                        $types = app(\App\Services\LicenseService::class)->get('modules', []);
+                    }
+
+                    // 3. Normalize & Alias
                     if (is_string($types)) {
                         $types = array_filter(explode(',', $types));
                     }
                     
-                    if (!is_array($types)) {
-                        $types = [];
-                    }
+                    $types = is_array($types) ? $types : [];
 
-                    // Alias 'supermarket' to 'supermart' if needed for the UI
-                    if (in_array('supermarket', $types) && !in_array('supermart', $types)) {
+                    // Alias 'supermarket'/ 'sales' to 'supermart' if needed for the UI
+                    if ((in_array('supermarket', $types) || in_array('sales', $types)) && !in_array('supermart', $types)) {
                         $types[] = 'supermart';
                     }
+
+                    // Alias 'bookings' to 'hotel'
+                    if (in_array('bookings', $types) && !in_array('hotel', $types)) {
+                        $types[] = 'hotel';
+                    }
+
+                    // For now, if they have sales, let's enable pharmacy too if that's what they expect
+                    // (Or better, check for 'prescriptions' if they have it)
+                    if (in_array('sales', $types) && !in_array('pharmacy', $types)) {
+                        $types[] = 'pharmacy';
+                    }
+                    
+                    \Illuminate\Support\Facades\Log::info('HandleInertia: modules fetched', [
+                        'from_db' => $profile ? true : false,
+                        'final_types' => array_values(array_unique($types))
+                    ]);
                     
                     return array_values(array_unique($types));
                 } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('HandleInertia: modules error', ['error' => $e->getMessage()]);
                     return [];
                 }
             },

@@ -140,9 +140,9 @@ class RegisteredUserController extends Controller
             Log::info('Register: About to create CompanyProfile', ['email' => $email]);
             $rawModules = $licenseData['modules'] ?? $request->module;
             if (is_array($rawModules)) {
-                $modules = $rawModules;
+                $modules = array_values($rawModules); // Force re-indexing to ensure it's a list []
             } elseif (is_string($rawModules)) {
-                $modules = explode(',', $rawModules);
+                $modules = array_filter(explode(',', $rawModules));
             } else {
                 $modules = [];
             }
