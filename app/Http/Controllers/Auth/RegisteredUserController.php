@@ -102,8 +102,8 @@ class RegisteredUserController extends Controller
             $email = $licenseData['tenant']['owner_email'] ?? $request->email;
             Log::info('Register: Checking for existing user', ['email' => $email]);
             if (User::where('email', $email)->exists()) {
-                Log::info('Register: User already exists, redirecting back');
-                return redirect()->back()->withErrors(['email' => 'An account with this email (' . $email . ') already exists. Please log in instead.'])->withInput();
+                Log::info('Register: User already exists, redirecting to login');
+                return redirect()->route('login')->with('license_message', 'This license has already been activated for ' . $email . '. Please log in to continue.');
             }
 
             Log::info('Register: Proceeding with account creation');
@@ -115,6 +115,7 @@ class RegisteredUserController extends Controller
                 'email' => $email,
                 'password' => Hash::make($request->password),
                 'is_admin' => true,
+                'role' => 'super_admin',
             ]);
             Log::info('Register: User created successfully', ['user_id' => $user->id]);
 

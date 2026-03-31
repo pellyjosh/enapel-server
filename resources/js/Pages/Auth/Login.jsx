@@ -17,7 +17,7 @@ export default function Login() {
         });
     };
 
-    const logoSrc = branding?.logo ? `/storage/${branding.logo}` : null;
+    const logoSrc = branding?.logo || null;
     const brandName = branding?.name || 'Enapel';
 
     return (

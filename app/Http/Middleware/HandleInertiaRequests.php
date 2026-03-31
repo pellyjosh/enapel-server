@@ -42,7 +42,15 @@ class HandleInertiaRequests extends Middleware
             ],
             'branding' => function () {
                 try {
-                    return \App\Models\CompanyProfile::first() ?? [
+                    $profile = \App\Models\CompanyProfile::first();
+                    if ($profile) {
+                        return [
+                            'name' => $profile->name,
+                            'logo' => $profile->logo ? \Illuminate\Support\Facades\Storage::url($profile->logo) : null,
+                            'email' => $profile->email,
+                        ];
+                    }
+                    return [
                         'name' => config('app.name'),
                         'logo' => null,
                     ];

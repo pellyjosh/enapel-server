@@ -28,7 +28,16 @@ Route::post('/license/validate-key', function (Request $request) {
                 'terminal_name'       => 'Initial Setup',
             ]);
 
-        return response()->json($response->json(), $response->status());
+        $data = $response->json();
+        if (($data['valid'] ?? false) === true) {
+            $email = $data['tenant']['owner_email'] ?? null;
+            if ($email && \App\Models\User::where('email', $email)->exists()) {
+                $data['already_activated'] = true;
+                $data['activated_email'] = $email;
+            }
+        }
+
+        return response()->json($data, $response->status());
     } catch (\Throwable $e) {
         return response()->json([
             'valid'   => false,

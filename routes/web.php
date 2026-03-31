@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 // ─── Public routes ────────────────────────────────────────────────────────
 Route::get('/', function () {
-    return view('auth.login');
+    return redirect()->route('login');
 });
 
 // License invalid / not configured screen

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 
 export default function Register(props) {
+    const { branding, flash } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         license_key: props.license_key || '',
         name: '',
@@ -22,6 +23,7 @@ export default function Register(props) {
     
     const [isValidating, setIsValidating] = useState(false);
     const [licenseError, setLicenseError] = useState('');
+    const [licenseData, setLicenseData] = useState(null);
 
     // If we have errors from the server, make sure we stay on the 'account' step
     useEffect(() => {
@@ -61,8 +63,9 @@ export default function Register(props) {
                 body: JSON.stringify({ license_key: data.license_key.trim().toUpperCase() }),
             });
             const resData = await res.json();
+            setLicenseData(resData);
             
-            if (resData.valid === true && resData.tenant) {
+            if (resData.valid === true && resData.tenant && !resData.already_activated) {
                 setData(prev => ({
                     ...prev,
                     license_key: data.license_key.trim().toUpperCase(),
@@ -73,9 +76,12 @@ export default function Register(props) {
                     module: Array.isArray(resData.modules) ? resData.modules.join(',') : (resData.modules || ''),
                 }));
                 setStep('account');
-            } else if (resData.valid === true && !resData.tenant) {
+            } else if (resData.valid === true && !resData.tenant && !resData.already_activated) {
                 // We got a valid license but no tenant info (shouldn't happen with our cloud, but let's be safe)
                 setLicenseError('License is valid, but tenant information is missing from the cloud response.');
+            } else if (resData.already_activated) {
+                // Handled in JSX
+                setLicenseError('');
             } else {
                 setLicenseError(resData.message || 'License validation failed.');
             }
@@ -104,11 +110,15 @@ export default function Register(props) {
 
                 <div className="relative z-10 w-full max-w-md">
                     {/* Logo */}
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4">
-                            <span className="text-white font-black text-3xl">E</span>
-                        </div>
-                        <h1 className="text-3xl font-black text-white tracking-tight">Enapel</h1>
+                    <div className="flex flex-col items-center mb-8 text-center">
+                        {branding?.logo ? (
+                            <img src={branding.logo} alt={branding.name} className="h-16 w-auto object-contain mb-4" />
+                        ) : (
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4">
+                                <span className="text-white font-black text-3xl">E</span>
+                            </div>
+                        )}
+                        <h1 className="text-3xl font-black text-white tracking-tight">{branding?.name || 'Enapel'}</h1>
                         <p className="text-gray-500 text-sm font-medium mt-1">Business Operations Platform</p>
                     </div>
 
@@ -138,12 +148,25 @@ export default function Register(props) {
                                     </p>
                                 </div>
 
+                                {flash?.status && (
+                                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                        <p className="text-emerald-400 text-sm font-medium">{flash.status}</p>
+                                    </div>
+                                )}
+
+                                {flash?.license_message && (
+                                    <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                        <p className="text-blue-400 text-sm font-medium">{flash.license_message}</p>
+                                    </div>
+                                )}
+
                                 {licenseError && (
                                     <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                                         <p className="text-red-400 text-sm font-medium">{licenseError}</p>
                                     </div>
                                 )}
 
+                                {!licenseData && (
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">License Key</label>
                                         <div className="flex gap-2">
@@ -168,6 +191,29 @@ export default function Register(props) {
                                             </button>
                                         </div>
                                     </div>
+                                )}
+
+                                {licenseData?.already_activated && (
+                                    <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-center space-y-4 animate-in zoom-in-95">
+                                        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto text-blue-400 text-xl font-bold">!</div>
+                                        <p className="text-blue-100 font-bold">This license is already activated</p>
+                                        <p className="text-blue-300/80 text-sm">
+                                            An account for <span className="text-white">{licenseData.activated_email}</span> already exists on this server.
+                                        </p>
+                                        <a 
+                                            href="/login" 
+                                            className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl transition-all"
+                                        >
+                                            Sign In to Your Account
+                                        </a>
+                                        <button 
+                                            onClick={() => { setLicenseData(null); setData('license_key', ''); }}
+                                            className="text-xs text-blue-400 hover:text-white underline"
+                                        >
+                                            Use a different key
+                                        </button>
+                                    </div>
+                                )}
 
                                 <div className="mt-6 pt-6 border-t border-gray-800 text-center">
                                     <p className="text-gray-600 text-sm">Already activated? <a href="/login" className="text-blue-400 hover:text-blue-300 font-semibold">Sign in</a></p>
