@@ -62,17 +62,20 @@ export default function Register(props) {
             });
             const resData = await res.json();
             
-            if (resData.valid === true) {
+            if (resData.valid === true && resData.tenant) {
                 setData(prev => ({
                     ...prev,
                     license_key: data.license_key.trim().toUpperCase(),
-                    name: resData.tenant.owner_name,
-                    email: resData.tenant.owner_email,
-                    business_name: resData.tenant.name,
-                    logo: resData.tenant.company_logo_url || '',
-                    module: resData.modules?.join(',') || '',
+                    name: resData.tenant?.owner_name || '',
+                    email: resData.tenant?.owner_email || '',
+                    business_name: resData.tenant?.name || '',
+                    logo: resData.tenant?.company_logo_url || '',
+                    module: Array.isArray(resData.modules) ? resData.modules.join(',') : (resData.modules || ''),
                 }));
                 setStep('account');
+            } else if (resData.valid === true && !resData.tenant) {
+                // We got a valid license but no tenant info (shouldn't happen with our cloud, but let's be safe)
+                setLicenseError('License is valid, but tenant information is missing from the cloud response.');
             } else {
                 setLicenseError(resData.message || 'License validation failed.');
             }

@@ -40,16 +40,29 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'branding' => \App\Models\CompanyProfile::first() ?? [
-                'name' => config('app.name'),
-                'logo' => null,
-            ],
-            'enabledModules' => function () {
-                $types = app(\App\Services\LicenseService::class)->get('tenant.business_types', []);
-                if (in_array('supermarket', $types) && !in_array('supermart', $types)) {
-                    $types[] = 'supermart';
+            'branding' => function () {
+                try {
+                    return \App\Models\CompanyProfile::first() ?? [
+                        'name' => config('app.name'),
+                        'logo' => null,
+                    ];
+                } catch (\Throwable $e) {
+                    return [
+                        'name' => config('app.name'),
+                        'logo' => null,
+                    ];
                 }
-                return $types;
+            },
+            'enabledModules' => function () {
+                try {
+                    $types = app(\App\Services\LicenseService::class)->get('tenant.business_types', []);
+                    if (in_array('supermarket', $types) && !in_array('supermart', $types)) {
+                        $types[] = 'supermart';
+                    }
+                    return $types;
+                } catch (\Throwable $e) {
+                    return [];
+                }
             },
             'flash' => [
                 'message'         => fn() => $request->session()->get('message'),

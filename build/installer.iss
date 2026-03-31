@@ -15,7 +15,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 
 [Files]
 Source: "package\support\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
-Source: "package\app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "package\app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "database\database.sqlite"
+Source: "package\app\database\database.sqlite"; DestDir: "{app}\app\database"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "package\php\*"; DestDir: "{app}\php"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "package\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "package\launch.vbs"; DestDir: "{app}"; Flags: ignoreversion
