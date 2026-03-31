@@ -64,13 +64,22 @@ class HandleInertiaRequests extends Middleware
             'enabledModules' => function () {
                 try {
                     $types = app(\App\Services\LicenseService::class)->get('modules', []);
+                    
+                    // Normalize to array if it's a string (comma-separated)
                     if (is_string($types)) {
-                        $types = explode(',', $types);
+                        $types = array_filter(explode(',', $types));
                     }
+                    
+                    if (!is_array($types)) {
+                        $types = [];
+                    }
+
+                    // Alias 'supermarket' to 'supermart' if needed for the UI
                     if (in_array('supermarket', $types) && !in_array('supermart', $types)) {
                         $types[] = 'supermart';
                     }
-                    return $types;
+                    
+                    return array_values(array_unique($types));
                 } catch (\Throwable $e) {
                     return [];
                 }

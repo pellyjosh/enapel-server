@@ -129,9 +129,16 @@ class LicenseService
         $terminalName = config('license.terminal_name');
         $cloudUrl     = rtrim(config('license.cloud_url'), '/');
 
-        if (! $licenseKey || ! $terminalId) {
-            Log::warning('LicenseService: LICENSE_KEY or TERMINAL_IDENTIFIER not set in .env');
-            return $this->invalidPayload('configuration_missing', 'License key or terminal identifier not configured.');
+        if (! $terminalId) {
+            $terminalId = (string) \Illuminate\Support\Str::uuid();
+            Log::info('LicenseService: Generating new terminal identifier', ['id' => $terminalId]);
+            $this->updateLocalEnv('TERMINAL_IDENTIFIER', $terminalId);
+            config(['license.terminal_id' => $terminalId]);
+        }
+
+        if (! $licenseKey) {
+            Log::warning('LicenseService: LICENSE_KEY not set in .env');
+            return $this->invalidPayload('configuration_missing', 'License key not configured.');
         }
 
         try {
@@ -201,25 +208,35 @@ class LicenseService
     }
 
     /**
-     * Update the local .env file with the new license key.
+     * Update a key in the local .env file.
      */
-    private function updateLocalKey(string $key): void
+    public function updateLocalEnv(string $key, string $value): void
     {
         $envPath = base_path('.env');
         if (!file_exists($envPath)) return;
 
         $content = file_get_contents($envPath);
-        if (str_contains($content, 'LICENSE_KEY=')) {
-            $content = preg_replace('/^LICENSE_KEY=.*/m', "LICENSE_KEY={$key}", $content);
+        $pattern = "/^{$key}=.*/m";
+        
+        if (preg_match($pattern, $content)) {
+            $content = preg_replace($pattern, "{$key}={$value}", $content);
         } else {
-            $content .= "\nLICENSE_KEY={$key}";
+            $content = rtrim($content) . "\n{$key}={$value}\n";
         }
 
         file_put_contents($envPath, $content);
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+    }
 
+    /**
+     * Update the local .env file with the new license key.
+     * @deprecated Use updateLocalEnv instead
+     */
+    private function updateLocalKey(string $key): void
+    {
+        $this->updateLocalEnv('LICENSE_KEY', $key);
         // Update current config so the rest of the request uses it
         config(['license.key' => $key]);
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
     }
 
     private function invalidPayload(string $reason, string $message): array

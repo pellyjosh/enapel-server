@@ -17,7 +17,25 @@ Route::post('/license/validate-key', function (Request $request) {
     $request->validate(['license_key' => 'required|string|min:5']);
 
     $cloudUrl = rtrim(config('license.cloud_url'), '/');
-    $terminalId = config('license.terminal_id') ?: (string) \Illuminate\Support\Str::uuid();
+    $terminalId = config('license.terminal_id');
+    
+    if (!$terminalId) {
+        $terminalId = (string) \Illuminate\Support\Str::uuid();
+        // ─── Consolidate Configuration: Save to .env ───
+        $licenseService = app(\App\Services\LicenseService::class);
+        $licenseService->updateLocalEnv('LICENSE_KEY', $request->license_key);
+        $licenseService->updateLocalEnv('TERMINAL_IDENTIFIER', $terminalId);
+
+        config([
+            'license.key' => $request->license_key,
+            'license.terminal_id' => $terminalId,
+        ]);
+
+        \Illuminate\Support\Facades\Log::info('Register: Configuration persisted to .env');
+
+        // Now refresh the license service with the configured key
+        $licenseService->refresh();
+    }
 
     try {
         $response = Http::timeout(10)

@@ -3,7 +3,8 @@ import { Link, usePage } from '@inertiajs/react';
 
 export default function AuthenticatedLayout({ children }) {
     const { url, props } = usePage();
-    const { branding, auth, enabledModules } = props;
+    const { branding, auth } = props;
+    const enabledModules = Array.isArray(props.enabledModules) ? props.enabledModules : [];
     const currentPath = url.split('?')[0];
     
     // Parse URL for module parameter to set initial active sidebar state

@@ -158,34 +158,22 @@ class RegisteredUserController extends Controller
             event(new Registered($user));
             Log::info('Register: Dispatching Registered event');
 
-            app(\App\Services\LicenseService::class)->refresh();
+            // ─── Consolidate Configuration: Save to .env ───
+            $licenseService = app(\App\Services\LicenseService::class);
+            $licenseService->updateLocalEnv('LICENSE_KEY', $licenseKey);
+            $licenseService->updateLocalEnv('TERMINAL_IDENTIFIER', $terminalId);
+
+            config([
+                'license.key' => $licenseKey,
+                'license.terminal_id' => $terminalId,
+            ]);
+
+            Log::info('Register: Configuration persisted to .env');
+
+            // Now refresh the license service with the configured key
+            $licenseService->refresh();
 
             Auth::login($user);
-
-            // ─── Consolidate Configuration: Save to .env (DO THIS LAST TO AVOID DEV RESTART ISSUES) ───
-            $envPath = base_path('.env');
-            if (file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                $replacements = [
-                    'LICENSE_KEY=' => "LICENSE_KEY={$licenseKey}",
-                    'TERMINAL_IDENTIFIER=' => "TERMINAL_IDENTIFIER={$terminalId}",
-                ];
-                foreach ($replacements as $key => $value) {
-                    if (str_contains($envContent, $key)) {
-                        $envContent = preg_replace("/^{$key}.*/m", $value, $envContent);
-                    } else {
-                        $envContent .= "\n{$value}";
-                    }
-                }
-                file_put_contents($envPath, $envContent);
-
-                config([
-                    'license.key' => $licenseKey,
-                    'license.terminal_id' => $terminalId,
-                ]);
-
-                \Illuminate\Support\Facades\Artisan::call('config:clear');
-            }
 
             Log::info('Register: All done, redirecting to dashboard');
             return redirect()->route('dashboard')->with('success', 'Account created and license activated!');
