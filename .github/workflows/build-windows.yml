@@ -1,13 +1,20 @@
-name: Build Windows Installer
+name: Build Enapel Server Windows App
 
 on:
-  workflow_dispatch:
   push:
     branches: ["main", "master"]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: sqlite
+      NATIVEPHP_ALLOW_LAN: "true"
+      NATIVEPHP_SERVER_HOST: "0.0.0.0"
+      NATIVEPHP_SERVER_PORT: "8000"
 
     steps:
       - uses: actions/checkout@v4
@@ -15,29 +22,54 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, bcmath, zip, fileinfo
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, bcmath, zip, fileinfo, sqlite3, pdo_mysql, curl, openssl
           coverage: none
 
-      - name: Install Composer Dependencies
-        run: composer install --no-ansi --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install NPM Dependencies & Build
+      - name: Prepare Build Environment
+        shell: pwsh
+        run: |
+          Copy-Item .env.example .env -Force
+
+          $envFile = Get-Content .env
+          $envFile = $envFile `
+            -replace '^APP_NAME=.*$', 'APP_NAME="Enapel Server"' `
+            -replace '^APP_ENV=.*$', 'APP_ENV=production' `
+            -replace '^APP_DEBUG=.*$', 'APP_DEBUG=false' `
+            -replace '^APP_URL=.*$', 'APP_URL=http://127.0.0.1:8000' `
+            -replace '^DB_CONNECTION=.*$', 'DB_CONNECTION=sqlite' `
+            -replace '^NATIVEPHP_ALLOW_LAN=.*$', 'NATIVEPHP_ALLOW_LAN=true' `
+            -replace '^NATIVEPHP_SERVER_HOST=.*$', 'NATIVEPHP_SERVER_HOST=0.0.0.0' `
+            -replace '^NATIVEPHP_SERVER_PORT=.*$', 'NATIVEPHP_SERVER_PORT=8000'
+          Set-Content .env $envFile
+
+          if (-not (Test-Path 'database/database.sqlite')) {
+            New-Item -ItemType File -Path 'database/database.sqlite' | Out-Null
+          }
+
+      - name: Install Composer Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Install NPM Dependencies & Build Vite
         run: |
           npm ci
           npm run build
 
-      - name: Prepare Windows Package
-        shell: pwsh
-        run: .\build\scripts\prepare-package.ps1
+      - name: Apply NativePHP Patch
+        run: php scripts/patch-nativephp.php
 
-      - name: Compile Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.7
-        with:
-          path: build/installer.iss
+      - name: Build Native App
+        run: php artisan native:build win
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: enapel-server-windows-installer
-          path: dist/enapel-server.exe
+          name: enapel-server-native-windows
+          path: dist/**

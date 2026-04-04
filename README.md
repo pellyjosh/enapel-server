@@ -29,3 +29,7 @@ Enapel Server is a localized business management application designed to handle 
 - **Server Setting**: The local server reads the hosted `enapel-cloud` base URL from `ENAPEL_CLOUD_URL` in its `.env`.
 - **Example**: `ENAPEL_CLOUD_URL=https://your-cloud-domain.com`
 - **Responsibility Split**: `enapel-server` uses `.env`, while `enapel-terminal` packages its cloud URL into the app build with `--dart-define=ENAPEL_CLOUD_URL=...`.
+
+php artisan native:serve --no-interaction # boots the NativePHP/Electron app
+npm run dev # starts Vite for hot-reloading
+composer run native:dev

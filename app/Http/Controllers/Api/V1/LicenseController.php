@@ -9,7 +9,12 @@ use Illuminate\Http\Request;
 
 class LicenseController extends Controller
 {
-    public function __construct(private readonly LicenseService $license) {}
+    private LicenseService $license;
+
+    public function __construct(LicenseService $license)
+    {
+        $this->license = $license;
+    }
 
     public function status(Request $request): JsonResponse
     {

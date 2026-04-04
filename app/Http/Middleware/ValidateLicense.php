@@ -19,7 +19,12 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ValidateLicense
 {
-    public function __construct(private readonly LicenseService $license) {}
+    private LicenseService $license;
+
+    public function __construct(LicenseService $license)
+    {
+        $this->license = $license;
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
