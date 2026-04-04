@@ -1,45 +1,49 @@
 {
-  "_AuthenticatedLayout-CrE3IPDk.js": {
-    "file": "assets/AuthenticatedLayout-CrE3IPDk.js",
+  "_AuthenticatedLayout-CwwySBn8.js": {
+    "file": "assets/AuthenticatedLayout-CwwySBn8.js",
     "name": "AuthenticatedLayout",
     "imports": [
       "resources/js/app.jsx"
     ]
   },
-  "_ConfirmationModal-DEI4obAJ.js": {
-    "file": "assets/ConfirmationModal-DEI4obAJ.js",
+  "_ConfirmationModal-BWuK7GWl.js": {
+    "file": "assets/ConfirmationModal-BWuK7GWl.js",
     "name": "ConfirmationModal",
     "imports": [
       "resources/js/app.jsx"
     ]
   },
-  "_Pagination-DT41V8r6.js": {
-    "file": "assets/Pagination-DT41V8r6.js",
+  "_Pagination-Cgjiq0S2.js": {
+    "file": "assets/Pagination-Cgjiq0S2.js",
     "name": "Pagination",
     "imports": [
       "resources/js/app.jsx"
     ]
   },
+  "_en-US-8upN5vI8.js": {
+    "file": "assets/en-US-8upN5vI8.js",
+    "name": "en-US"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-DwvSkXWY.css",
+    "file": "assets/app-7y5bzi75.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/Pages/ActivityLogs.jsx": {
-    "file": "assets/ActivityLogs-BK13xLm4.js",
+    "file": "assets/ActivityLogs-CAmmDvim.js",
     "name": "ActivityLogs",
     "src": "resources/js/Pages/ActivityLogs.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Auth/Login.jsx": {
-    "file": "assets/Login--MsYbr_U.js",
+    "file": "assets/Login-OTbu9pgD.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.jsx",
     "isDynamicEntry": true,
@@ -47,11 +51,11 @@
       "resources/js/app.jsx"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Auth/Register.jsx": {
-    "file": "assets/Register-DlTzkxd_.js",
+    "file": "assets/Register-CUbOl1kD.js",
     "name": "Register",
     "src": "resources/js/Pages/Auth/Register.jsx",
     "isDynamicEntry": true,
@@ -59,154 +63,180 @@
       "resources/js/app.jsx"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Dashboard.jsx": {
-    "file": "assets/Dashboard-D0Pbd9ta.js",
+    "file": "assets/Dashboard-qm4vGBBy.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
+    ]
+  },
+  "resources/js/Pages/DisasterRecovery/Restore.jsx": {
+    "file": "assets/Restore-C6TsiLC9.js",
+    "name": "Restore",
+    "src": "resources/js/Pages/DisasterRecovery/Restore.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx"
+    ],
+    "css": [
+      "assets/app-7y5bzi75.css"
+    ]
+  },
+  "resources/js/Pages/Global/Settings/DisasterRecovery.jsx": {
+    "file": "assets/DisasterRecovery-CsNYdLtQ.js",
+    "name": "DisasterRecovery",
+    "src": "resources/js/Pages/Global/Settings/DisasterRecovery.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_en-US-8upN5vI8.js"
+    ],
+    "css": [
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Global/Settings/Terminals.jsx": {
-    "file": "assets/Terminals-3nTIg-dE.js",
+    "file": "assets/Terminals-DMSNpl5m.js",
     "name": "Terminals",
     "src": "resources/js/Pages/Global/Settings/Terminals.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Bookings.jsx": {
-    "file": "assets/Bookings-C28W_Gt9.js",
+    "file": "assets/Bookings-BbrK0z7t.js",
     "name": "Bookings",
     "src": "resources/js/Pages/Hotel/Bookings.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Dashboard.jsx": {
-    "file": "assets/Dashboard-BSPhzPIw.js",
+    "file": "assets/Dashboard-BCOInEoS.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Hotel/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Guests.jsx": {
-    "file": "assets/Guests-CiAfyb4c.js",
+    "file": "assets/Guests-BVV-BrTl.js",
     "name": "Guests",
     "src": "resources/js/Pages/Hotel/Guests.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Housekeeping.jsx": {
-    "file": "assets/Housekeeping-oGN61I_n.js",
+    "file": "assets/Housekeeping-CJUiFHs6.js",
     "name": "Housekeeping",
     "src": "resources/js/Pages/Hotel/Housekeeping.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Invoices.jsx": {
-    "file": "assets/Invoices-D4Nmfzi2.js",
+    "file": "assets/Invoices-DQWZUfbY.js",
     "name": "Invoices",
     "src": "resources/js/Pages/Hotel/Invoices.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Reports.jsx": {
-    "file": "assets/Reports-CmAxlr01.js",
+    "file": "assets/Reports-C04plJZp.js",
     "name": "Reports",
     "src": "resources/js/Pages/Hotel/Reports.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/RoomService.jsx": {
-    "file": "assets/RoomService-rP9d2Iip.js",
+    "file": "assets/RoomService-Id2FA6jk.js",
     "name": "RoomService",
     "src": "resources/js/Pages/Hotel/RoomService.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Rooms.jsx": {
-    "file": "assets/Rooms-CC2QWQQW.js",
+    "file": "assets/Rooms-BBajPgM-.js",
     "name": "Rooms",
     "src": "resources/js/Pages/Hotel/Rooms.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Hotel/Settings.jsx": {
-    "file": "assets/Settings-CotpNW1c.js",
+    "file": "assets/Settings-CuRW6wTz.js",
     "name": "Settings",
     "src": "resources/js/Pages/Hotel/Settings.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/LicenseRequired.jsx": {
-    "file": "assets/LicenseRequired-ClxhT0NU.js",
+    "file": "assets/LicenseRequired-Cjuod55A.js",
     "name": "LicenseRequired",
     "src": "resources/js/Pages/LicenseRequired.jsx",
     "isDynamicEntry": true,
@@ -214,258 +244,259 @@
       "resources/js/app.jsx"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Alerts.jsx": {
-    "file": "assets/Alerts-DcDTMq8I.js",
+    "file": "assets/Alerts-BpP6pFR1.js",
     "name": "Alerts",
     "src": "resources/js/Pages/Pharmacy/Alerts.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Dashboard.jsx": {
-    "file": "assets/Dashboard-4ilVZ1e-.js",
+    "file": "assets/Dashboard-DzS6H_hF.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Pharmacy/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/DrugCatalog.jsx": {
-    "file": "assets/DrugCatalog-kQfy9A3k.js",
+    "file": "assets/DrugCatalog-DyDOcsB2.js",
     "name": "DrugCatalog",
     "src": "resources/js/Pages/Pharmacy/DrugCatalog.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_ConfirmationModal-BWuK7GWl.js",
+      "_en-US-8upN5vI8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Orders.jsx": {
-    "file": "assets/Orders-K6imnKC1.js",
+    "file": "assets/Orders-DRWA4dHo.js",
     "name": "Orders",
     "src": "resources/js/Pages/Pharmacy/Orders.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Pos.jsx": {
-    "file": "assets/Pos-CE9KVnBR.js",
+    "file": "assets/Pos-CExIN9y5.js",
     "name": "Pos",
     "src": "resources/js/Pages/Pharmacy/Pos.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Prescriptions.jsx": {
-    "file": "assets/Prescriptions-Bruou5Sn.js",
+    "file": "assets/Prescriptions-Q41nxF4r.js",
     "name": "Prescriptions",
     "src": "resources/js/Pages/Pharmacy/Prescriptions.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Sales.jsx": {
-    "file": "assets/Sales-R-FVMhqf.js",
+    "file": "assets/Sales-CFZdjC-M.js",
     "name": "Sales",
     "src": "resources/js/Pages/Pharmacy/Sales.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Stock.jsx": {
-    "file": "assets/Stock-B607lGOH.js",
+    "file": "assets/Stock-CNEFuf7w.js",
     "name": "Stock",
     "src": "resources/js/Pages/Pharmacy/Stock.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Pharmacy/Suppliers.jsx": {
-    "file": "assets/Suppliers-D1FGE_CO.js",
+    "file": "assets/Suppliers-CdHGcgEc.js",
     "name": "Suppliers",
     "src": "resources/js/Pages/Pharmacy/Suppliers.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Categories.jsx": {
-    "file": "assets/Categories-CU-NQaJJ.js",
+    "file": "assets/Categories-DMKAbc2J.js",
     "name": "Categories",
     "src": "resources/js/Pages/Supermart/Categories.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Dashboard.jsx": {
-    "file": "assets/Dashboard-B-W5pNOf.js",
+    "file": "assets/Dashboard-CrR-ZS_T.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Supermart/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Invoices.jsx": {
-    "file": "assets/Invoices-BEzhV3yo.js",
+    "file": "assets/Invoices-CcheEAba.js",
     "name": "Invoices",
     "src": "resources/js/Pages/Supermart/Invoices.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Orders.jsx": {
-    "file": "assets/Orders-CQMXcek8.js",
+    "file": "assets/Orders-C-Fgbf9c.js",
     "name": "Orders",
     "src": "resources/js/Pages/Supermart/Orders.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Pos.jsx": {
-    "file": "assets/Pos-UgrJNnDn.js",
+    "file": "assets/Pos-vH2wpV-L.js",
     "name": "Pos",
     "src": "resources/js/Pages/Supermart/Pos.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/ProductCatalog.jsx": {
-    "file": "assets/ProductCatalog-BTwxmB1b.js",
+    "file": "assets/ProductCatalog-CiuFUALi.js",
     "name": "ProductCatalog",
     "src": "resources/js/Pages/Supermart/ProductCatalog.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Reports.jsx": {
-    "file": "assets/Reports-DNCfFojC.js",
+    "file": "assets/Reports-CaTDvNzp.js",
     "name": "Reports",
     "src": "resources/js/Pages/Supermart/Reports.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js"
+      "_AuthenticatedLayout-CwwySBn8.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Stock.jsx": {
-    "file": "assets/Stock-TEb1l6Bi.js",
+    "file": "assets/Stock-B97-rBod.js",
     "name": "Stock",
     "src": "resources/js/Pages/Supermart/Stock.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js",
-      "_ConfirmationModal-DEI4obAJ.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js",
+      "_ConfirmationModal-BWuK7GWl.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/Pages/Supermart/Suppliers.jsx": {
-    "file": "assets/Suppliers-DBf9c-ud.js",
+    "file": "assets/Suppliers-DAoE4Kwq.js",
     "name": "Suppliers",
     "src": "resources/js/Pages/Supermart/Suppliers.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.jsx",
-      "_AuthenticatedLayout-CrE3IPDk.js",
-      "_Pagination-DT41V8r6.js"
+      "_AuthenticatedLayout-CwwySBn8.js",
+      "_Pagination-Cgjiq0S2.js"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-BTXD4VFp.js",
+    "file": "assets/app-CxMtG17X.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -474,6 +505,8 @@
       "resources/js/Pages/Auth/Login.jsx",
       "resources/js/Pages/Auth/Register.jsx",
       "resources/js/Pages/Dashboard.jsx",
+      "resources/js/Pages/DisasterRecovery/Restore.jsx",
+      "resources/js/Pages/Global/Settings/DisasterRecovery.jsx",
       "resources/js/Pages/Global/Settings/Terminals.jsx",
       "resources/js/Pages/Hotel/Bookings.jsx",
       "resources/js/Pages/Hotel/Dashboard.jsx",
@@ -505,7 +538,7 @@
       "resources/js/Pages/Supermart/Suppliers.jsx"
     ],
     "css": [
-      "assets/app-DwvSkXWY.css"
+      "assets/app-7y5bzi75.css"
     ]
   }
 }

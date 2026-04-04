@@ -1,11 +1,14 @@
 <?php
 
+use App\Support\RuntimeEnvironment;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\DisasterRecoveryController;
+use App\Http\Controllers\PublicDisasterRecoveryController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public routes ────────────────────────────────────────────────────────
@@ -24,8 +27,12 @@ Route::post('/license-required/configure', function (\Illuminate\Http\Request $r
     // Write the key into .env
     $key   = strtoupper(trim($request->license_key));
     $terminalId = config('license.terminal_id') ?: (string) \Illuminate\Support\Str::uuid();
-    $envPath = base_path('.env');
-    $envContent = file_get_contents($envPath);
+    $envPath = RuntimeEnvironment::environmentFilePath();
+    $envContent = file_exists($envPath) ? file_get_contents($envPath) : '';
+
+    if ($envContent === false) {
+        $envContent = '';
+    }
 
     if (str_contains($envContent, 'LICENSE_KEY=')) {
         $envContent = preg_replace('/^LICENSE_KEY=.*/m', "LICENSE_KEY={$key}", $envContent);
@@ -61,6 +68,9 @@ Route::post('/license-required/configure', function (\Illuminate\Http\Request $r
         'license_message' => $payload['message'] ?? 'License validation failed.',
     ]);
 })->name('license.configure');
+
+Route::get('/disaster-recovery/restore', [PublicDisasterRecoveryController::class, 'create'])->name('disaster-recovery.restore.create');
+Route::post('/disaster-recovery/restore', [PublicDisasterRecoveryController::class, 'store'])->name('disaster-recovery.restore.store');
 
 // ─── Authenticated + license-validated routes ──────────────────────────────
 Route::get('/dashboard', function () {
@@ -123,6 +133,13 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
     // Global Settings -> Terminals
     Route::get('/global/settings/terminals', [\App\Http\Controllers\TerminalController::class, 'index'])->name('global.settings.terminals');
     Route::post('/global/settings/terminals/{device}/toggle', [\App\Http\Controllers\TerminalController::class, 'toggleStatus'])->name('global.settings.terminals.toggle');
+    Route::get('/global/settings/disaster-recovery', [DisasterRecoveryController::class, 'index'])->name('global.settings.disaster-recovery');
+    Route::put('/global/settings/disaster-recovery', [DisasterRecoveryController::class, 'update'])->name('global.settings.disaster-recovery.update');
+    Route::post('/global/settings/disaster-recovery/snapshot', [DisasterRecoveryController::class, 'snapshot'])->name('global.settings.disaster-recovery.snapshot');
+    Route::post('/global/settings/disaster-recovery/pick-folder', [DisasterRecoveryController::class, 'pickFolder'])->name('global.settings.disaster-recovery.pick-folder');
+    Route::post('/global/settings/disaster-recovery/pairing-token', [DisasterRecoveryController::class, 'generatePairingToken'])->name('global.settings.disaster-recovery.pairing-token');
+    Route::post('/global/settings/disaster-recovery/pair', [DisasterRecoveryController::class, 'pair'])->name('global.settings.disaster-recovery.pair');
+    Route::post('/global/settings/disaster-recovery/promote', [DisasterRecoveryController::class, 'promote'])->name('global.settings.disaster-recovery.promote');
 
     Route::get('/user_activity', function () {
         return view('user.reports.useractivity');

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\RuntimeEnvironment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -212,10 +213,14 @@ class LicenseService
      */
     public function updateLocalEnv(string $key, string $value): void
     {
-        $envPath = base_path('.env');
+        $envPath = RuntimeEnvironment::environmentFilePath();
         if (!file_exists($envPath)) return;
 
         $content = file_get_contents($envPath);
+        if ($content === false) {
+            return;
+        }
+
         $pattern = "/^{$key}=.*/m";
         
         if (preg_match($pattern, $content)) {

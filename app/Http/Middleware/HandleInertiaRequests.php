@@ -111,6 +111,7 @@ class HandleInertiaRequests extends Middleware
                 'success'         => fn() => $request->session()->get('success'),
                 'error'           => fn() => $request->session()->get('error'),
                 'status'          => fn() => $request->session()->get('status'),
+                'pairing_token'   => fn() => $request->session()->get('pairing_token'),
                 'license_error'   => fn() => $request->session()->get('license_error'),
                 'license_message' => fn() => $request->session()->get('license_message'),
                 'license_reason'  => fn() => $request->session()->get('license_reason'),

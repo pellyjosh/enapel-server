@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 export default function Login() {
     const { branding, flash } = usePage().props;
@@ -171,6 +171,13 @@ export default function Login() {
                             <a href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
                                 Activate with License Key
                             </a>
+                        </p>
+
+                        <p className="text-center text-gray-500 text-sm mt-3">
+                            Disaster recovery needed?{' '}
+                            <Link href={route('disaster-recovery.restore.create')} className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                                Restore from backup
+                            </Link>
                         </p>
 
                         {/* Security badge */}

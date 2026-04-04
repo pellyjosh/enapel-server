@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\LicenseController;
 use App\Http\Controllers\Api\V1\PersonnelController;
 use App\Http\Controllers\Api\V1\SalesController;
 use App\Http\Controllers\Api\V1\SupplyController;
+use App\Http\Controllers\Api\V1\DisasterRecoveryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,13 @@ Route::get('/', function () {
 
 Route::controller(LicenseController::class)->group(function () {
     Route::get('/license/status', 'status');
+});
+
+Route::prefix('dr')->controller(DisasterRecoveryController::class)->group(function () {
+    Route::post('/pairing', 'pairing');
+    Route::get('/status', 'status');
+    Route::get('/bundles/{bundleUuid}', 'download');
+    Route::post('/heartbeat', 'heartbeat');
 });
 
 Route::middleware('validate.license')->group(function () {

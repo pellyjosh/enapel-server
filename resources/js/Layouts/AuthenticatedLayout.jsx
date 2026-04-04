@@ -66,6 +66,7 @@ export default function AuthenticatedLayout({ children }) {
             { name: 'Expenses', href: '#', icon: '🧾' },
             { section: 'Global Settings' },
             { name: 'Terminals & Devices', href: '/global/settings/terminals', icon: '💻' },
+            { name: 'Disaster Recovery', href: '/global/settings/disaster-recovery', icon: '🛟' },
             { name: 'System Settings', href: '#', icon: '⚙️' },
         ],
         hotel: [

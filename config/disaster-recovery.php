@@ -1,0 +1,37 @@
+<?php
+
+return [
+    'snapshot_interval_minutes' => (int) env('DR_SNAPSHOT_INTERVAL_MINUTES', 15),
+    'standby_pull_interval_seconds' => (int) env('DR_STANDBY_PULL_INTERVAL_SECONDS', 15),
+    'max_standby_lag_seconds' => (int) env('DR_MAX_STANDBY_LAG_SECONDS', 60),
+    'signature_ttl_seconds' => (int) env('DR_SIGNATURE_TTL_SECONDS', 300),
+    'cloud_timeout_seconds' => (int) env('DR_CLOUD_TIMEOUT_SECONDS', 30),
+    'private_ip_only' => env('DR_PRIVATE_IP_ONLY', true),
+    'default_full_backup_hour' => (int) env('DR_FULL_BACKUP_HOUR', 2),
+    'default_monthly_backup_hour' => (int) env('DR_MONTHLY_BACKUP_HOUR', 3),
+    'env_keys' => [
+        'APP_NAME',
+        'APP_ENV',
+        'APP_KEY',
+        'APP_URL',
+        'LICENSE_KEY',
+        'ENAPEL_CLOUD_URL',
+        'TERMINAL_IDENTIFIER',
+        'TERMINAL_NAME',
+        'LICENSE_GRACE_HOURS',
+        'NATIVEPHP_ALLOW_LAN',
+        'NATIVEPHP_SERVER_HOST',
+        'NATIVEPHP_SERVER_PORT',
+    ],
+    'env_key_prefixes' => [
+        'PAYSTACK_',
+        'STRIPE_',
+        'FLUTTERWAVE_',
+        'SMTP_',
+        'MAIL_',
+        'AWS_',
+        'AZURE_',
+        'DO_SPACES_',
+        'DR_',
+    ],
+];

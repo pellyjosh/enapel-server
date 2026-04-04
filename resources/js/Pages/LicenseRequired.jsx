@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 export default function LicenseRequired() {
     const { flash } = usePage().props;
@@ -103,6 +103,12 @@ export default function LicenseRequired() {
                             <p className="text-gray-600 text-xs">
                                 Secured by <span className="text-gray-500 font-semibold">Enapel Cloud</span> license validation
                             </p>
+                        </div>
+
+                        <div className="mt-4 text-center">
+                            <Link href={route('disaster-recovery.restore.create')} className="text-sm font-semibold text-blue-400 hover:text-blue-300">
+                                Restore this installation from backup
+                            </Link>
                         </div>
                     </div>
                 </div>
