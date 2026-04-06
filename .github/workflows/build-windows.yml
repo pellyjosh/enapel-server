@@ -16,6 +16,7 @@ jobs:
       NATIVEPHP_SERVER_HOST: "0.0.0.0"
       NATIVEPHP_SERVER_PORT: "8000"
       NATIVEPHP_WINDOWS_TARGETS: "portable"
+      NATIVEPHP_UPDATER_ENABLED: "false"
 
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +47,9 @@ jobs:
             -replace '^APP_DEBUG=.*$', 'APP_DEBUG=false' `
             -replace '^APP_URL=.*$', 'APP_URL=http://127.0.0.1:8000' `
             -replace '^DB_CONNECTION=.*$', 'DB_CONNECTION=sqlite' `
+            -replace '^SESSION_DRIVER=.*$', 'SESSION_DRIVER=file' `
+            -replace '^CACHE_STORE=.*$', 'CACHE_STORE=file' `
+            -replace '^QUEUE_CONNECTION=.*$', 'QUEUE_CONNECTION=sync' `
             -replace '^NATIVEPHP_ALLOW_LAN=.*$', 'NATIVEPHP_ALLOW_LAN=true' `
             -replace '^NATIVEPHP_SERVER_HOST=.*$', 'NATIVEPHP_SERVER_HOST=0.0.0.0' `
             -replace '^NATIVEPHP_SERVER_PORT=.*$', 'NATIVEPHP_SERVER_PORT=8000'
@@ -62,11 +66,21 @@ jobs:
         run: php artisan key:generate --force --ansi
 
       - name: Install NPM Dependencies & Build Vite
+        shell: pwsh
         run: |
           npm ci
+          # Clean old build artifacts and caches
+          if (Test-Path 'public/build') { Remove-Item 'public/build' -Force -Recurse }
+          if (Test-Path 'public/hot') { Remove-Item 'public/hot' -Force }
+          php artisan view:clear --ansi
+          php artisan config:clear --ansi
+          php artisan cache:clear --ansi
           npm run build
 
-      - name: Apply NativePHP Patch
+      # Patches are applied AFTER npm ci so that the electron-plugin TypeScript
+      # sources exist in vendor/nativephp/electron/resources/js/electron-plugin/src/
+      # before the patch script writes to them.
+      - name: Apply NativePHP Patches
         run: php scripts/patch-nativephp.php
 
       - name: Build Native App

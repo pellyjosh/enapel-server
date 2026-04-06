@@ -29,6 +29,364 @@ function inputClass(hasError, extra = '') {
     return `w-full rounded-2xl border ${hasError ? 'border-rose-500 bg-rose-50 focus:border-rose-500 focus:ring-rose-200' : 'border-gray-200'} ${extra}`.trim();
 }
 
+function detectOperatingSystem() {
+    if (typeof window === 'undefined') {
+        return 'windows';
+    }
+
+    const agent = `${window.navigator.userAgent} ${window.navigator.platform}`.toLowerCase();
+
+    if (agent.includes('mac')) {
+        return 'mac';
+    }
+
+    if (agent.includes('linux') || agent.includes('x11')) {
+        return 'linux';
+    }
+
+    return 'windows';
+}
+
+function OperatingSystemIcon({ os }) {
+    if (os === 'mac') {
+        return (
+            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18c.4-1.2.8-2.3 1.7-3.4.8-1 1.8-1.8 3.3-2.5" />
+                <path d="M14.8 7.3c.8-1 1.1-2.2 1-3.3-1.1.1-2.3.8-3 1.7-.7.8-1.2 2-1.1 3.2 1.2.1 2.4-.5 3.1-1.6Z" />
+                <path d="M8.2 8.7c1-.9 2.4-1.4 3.6-1.4 1 0 2 .3 2.8.8.5.3 1 .7 1.6.7.5 0 1-.3 1.5-.5.6-.3 1.3-.5 2-.4-.2.7-.8 1.4-1.3 1.9-.6.5-1 1.2-1 2 0 1 .5 1.9 1.3 2.5-.5 1.3-1 2.2-1.8 3.1-.8.9-1.6 1.8-2.9 1.8-1.1 0-1.5-.6-2.8-.6-1.2 0-1.7.6-2.8.6-1.2 0-2-.8-2.8-1.7-1.7-2-3-5.6-1.3-8.8.5-.8 1.1-1.5 1.9-2Z" />
+            </svg>
+        );
+    }
+
+    if (os === 'linux') {
+        return (
+            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3c2.7 0 4.5 2.6 4.5 5.7 0 1.5-.4 3-1.1 4.1l1.1 3.8c.2.8-.4 1.5-1.2 1.3l-2.2-.5-.9 2.8c-.2.6-1 .6-1.2 0l-.9-2.8-2.2.5c-.8.2-1.5-.5-1.2-1.3l1.1-3.8C7.9 11.7 7.5 10.2 7.5 8.7 7.5 5.6 9.3 3 12 3Z" />
+                <path d="M10 10.5h.01" />
+                <path d="M14 10.5h.01" />
+                <path d="M10 14c1.1.9 2.9.9 4 0" />
+            </svg>
+        );
+    }
+
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2" />
+            <path d="M8 20h8" />
+            <path d="M10 16v4" />
+            <path d="M14 16v4" />
+            <path d="M12 8v4" />
+            <path d="M8 12h8" />
+        </svg>
+    );
+}
+
+function SharingPreviewCard({ guide, detectedOs }) {
+    const themeClasses = {
+        blue: {
+            panel: 'border-blue-200 bg-blue-50/80',
+            icon: 'bg-blue-600 text-white',
+            chip: 'border-blue-200 bg-white text-blue-900',
+            focus: 'border-blue-300 bg-white text-blue-950',
+        },
+        violet: {
+            panel: 'border-violet-200 bg-violet-50/80',
+            icon: 'bg-violet-600 text-white',
+            chip: 'border-violet-200 bg-white text-violet-900',
+            focus: 'border-violet-300 bg-white text-violet-950',
+        },
+        emerald: {
+            panel: 'border-emerald-200 bg-emerald-50/80',
+            icon: 'bg-emerald-600 text-white',
+            chip: 'border-emerald-200 bg-white text-emerald-900',
+            focus: 'border-emerald-300 bg-white text-emerald-950',
+        },
+    };
+
+    const theme = themeClasses[guide.theme] || themeClasses.blue;
+
+    return (
+        <div className={`rounded-3xl border p-5 ${theme.panel}`}>
+            <div className="flex items-start gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.icon}`}>
+                    <OperatingSystemIcon os={detectedOs} />
+                </div>
+                <div>
+                    <p className="text-sm font-black text-gray-900">{guide.preview.title}</p>
+                    <p className="mt-1 text-sm text-gray-600 leading-6">{guide.preview.subtitle}</p>
+                </div>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-900 px-4 py-3">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    <p className="ml-2 text-[11px] font-bold uppercase tracking-[0.25em] text-gray-300">{guide.preview.windowTitle}</p>
+                </div>
+
+                <div className="space-y-4 bg-gradient-to-br from-white via-gray-50 to-gray-100/70 p-4">
+                    <div className="flex flex-wrap gap-2">
+                        {guide.preview.menuTrail.map((item) => (
+                            <span key={item} className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.18em] ${theme.chip}`}>
+                                {item}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div className={`rounded-2xl border-2 border-dashed px-4 py-4 ${theme.focus}`}>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-gray-500">Look for this</p>
+                        <p className="mt-2 text-lg font-black">{guide.preview.focusLabel}</p>
+                        <p className="mt-2 text-sm leading-6 text-gray-600">{guide.preview.focusHint}</p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                        {guide.preview.shortcuts.map((item) => (
+                            <div key={item} className="rounded-2xl border border-gray-200 bg-white px-3 py-3 text-center text-[11px] font-black uppercase tracking-[0.2em] text-gray-600 shadow-sm">
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SharingHelpModal({ show, onClose, detectedOs }) {
+    const [copiedExamplePath, setCopiedExamplePath] = React.useState(false);
+    const copyTimeoutRef = React.useRef(null);
+
+    const osGuides = {
+        windows: {
+            label: 'Windows',
+            theme: 'blue',
+            intro: 'This is the easiest option for most Enapel office setups.',
+            path: '\\COMPUTER-NAME\EnapelBackups',
+            preview: {
+                title: 'Use File Explorer folder sharing',
+                subtitle: 'Open the backup folder in File Explorer, then go to the Sharing options for that folder.',
+                windowTitle: 'Windows File Explorer',
+                menuTrail: ['Folder', 'Properties', 'Sharing', 'Advanced'],
+                focusLabel: 'Share this folder',
+                focusHint: 'After turning this on, give the other computers Read and Change permission so Enapel can save backups there.',
+                shortcuts: ['Share', 'Permissions', 'UNC Path'],
+            },
+            steps: [
+                {
+                    title: 'Create the backup folder',
+                    detail: 'Create a folder such as C:\EnapelBackups on the computer that will hold backups.',
+                },
+                {
+                    title: 'Open folder sharing',
+                    detail: 'Right-click the folder, choose Properties, then open the Sharing tab.',
+                },
+                {
+                    title: 'Turn sharing on',
+                    detail: 'Choose Advanced Sharing and tick Share this folder.',
+                },
+                {
+                    title: 'Allow backup access',
+                    detail: 'Open Permissions and allow the users or computers that need it to have Read and Change access.',
+                },
+                {
+                    title: 'Use the shared path in Enapel',
+                    detail: 'Paste \\COMPUTER-NAME\EnapelBackups into the Shared Backup Folder field in Enapel.',
+                },
+            ],
+            tip: 'If you are not sure of the computer name, open Settings and search for “About your PC”.',
+        },
+        mac: {
+            label: 'macOS',
+            theme: 'violet',
+            intro: 'macOS can share folders over the network using File Sharing.',
+            path: '\\MAC-NAME\EnapelBackups',
+            preview: {
+                title: 'Use System Settings → Sharing',
+                subtitle: 'Turn on File Sharing, then add your backup folder under Shared Folders.',
+                windowTitle: 'macOS System Settings',
+                menuTrail: ['General', 'Sharing', 'File Sharing', 'Options'],
+                focusLabel: 'File Sharing',
+                focusHint: 'Once File Sharing is enabled, add your Enapel backup folder and give the required users Read & Write access.',
+                shortcuts: ['Finder', 'Sharing', 'Users'],
+            },
+            steps: [
+                {
+                    title: 'Create the backup folder',
+                    detail: 'Create a folder such as EnapelBackups in Finder on the Mac that will store backups.',
+                },
+                {
+                    title: 'Open sharing settings',
+                    detail: 'Open System Settings, choose General, then choose Sharing.',
+                },
+                {
+                    title: 'Turn on File Sharing',
+                    detail: 'Switch on File Sharing and add your backup folder under Shared Folders.',
+                },
+                {
+                    title: 'Allow write access',
+                    detail: 'Set the required users to Read & Write so Enapel can save backups into the folder.',
+                },
+                {
+                    title: 'Use the shared path in Enapel',
+                    detail: 'Paste \\MAC-NAME\EnapelBackups into the Shared Backup Folder field in Enapel.',
+                },
+            ],
+            tip: 'You can see the Mac name in System Settings → General → About or in the Sharing page itself.',
+        },
+        linux: {
+            label: 'Linux',
+            theme: 'emerald',
+            intro: 'Linux usually shares folders using Samba.',
+            path: '\\SERVER-NAME\EnapelBackups',
+            preview: {
+                title: 'Use Samba or your file manager sharing menu',
+                subtitle: 'Many Linux desktops let you right-click the folder and turn on Local Network Share or Samba sharing.',
+                windowTitle: 'Linux Folder Sharing',
+                menuTrail: ['Folder', 'Share', 'Samba', 'Permissions'],
+                focusLabel: 'Local Network Share',
+                focusHint: 'If your desktop does not show this option, your Linux administrator may need to enable Samba first.',
+                shortcuts: ['Folder', 'Samba', 'Write'],
+            },
+            steps: [
+                {
+                    title: 'Create the backup folder',
+                    detail: 'Create a folder named EnapelBackups or another folder you want Enapel to use for backups.',
+                },
+                {
+                    title: 'Enable sharing',
+                    detail: 'Use your file manager sharing menu or Samba settings to share that folder on the network.',
+                },
+                {
+                    title: 'Allow read and write access',
+                    detail: 'Make sure the required users or devices can read and write to the shared folder.',
+                },
+                {
+                    title: 'Ask for Samba help if needed',
+                    detail: 'If there is no sharing option yet, ask your Linux administrator to install or enable Samba file sharing.',
+                },
+                {
+                    title: 'Use the shared path in Enapel',
+                    detail: 'Paste \\SERVER-NAME\EnapelBackups into the Shared Backup Folder field in Enapel.',
+                },
+            ],
+            tip: 'Linux menu names vary the most, but you usually need Samba or a “Local Network Share” option.',
+        },
+    };
+
+    const guide = osGuides[detectedOs] || osGuides.windows;
+
+    React.useEffect(() => {
+        if (!show) {
+            setCopiedExamplePath(false);
+
+            if (copyTimeoutRef.current) {
+                window.clearTimeout(copyTimeoutRef.current);
+                copyTimeoutRef.current = null;
+            }
+        }
+    }, [show]);
+
+    React.useEffect(() => {
+        return () => {
+            if (copyTimeoutRef.current) {
+                window.clearTimeout(copyTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const copyExamplePath = async () => {
+        try {
+            if (!window.navigator?.clipboard) {
+                throw new Error('Clipboard is not available');
+            }
+
+            await window.navigator.clipboard.writeText(guide.path);
+            setCopiedExamplePath(true);
+
+            if (copyTimeoutRef.current) {
+                window.clearTimeout(copyTimeoutRef.current);
+            }
+
+            copyTimeoutRef.current = window.setTimeout(() => {
+                setCopiedExamplePath(false);
+                copyTimeoutRef.current = null;
+            }, 2000);
+        } catch (error) {
+            window.alert('Could not copy the example path.');
+        }
+    };
+
+    if (!show) {
+        return null;
+    }
+
+    return (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">Folder Sharing Tutorial</p>
+                        <h3 className="text-2xl font-black text-gray-900 mt-2">How to share a folder on {guide.label}</h3>
+                        <p className="text-gray-500 font-medium mt-2">{guide.intro}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="h-10 w-10 rounded-2xl bg-gray-100 text-gray-700 font-black"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                    <SharingPreviewCard guide={guide} detectedOs={detectedOs} />
+
+                    <div className="rounded-3xl border border-blue-200 bg-blue-50 px-4 py-4">
+                        <p className="text-sm font-black text-blue-950">Shared path example</p>
+                        <p className="mt-2 font-mono text-sm text-blue-900 break-all">{guide.path}</p>
+                        <p className="mt-3 text-sm text-blue-900 leading-6">
+                            After you share the folder, this is the kind of network path you should paste into the Shared Backup Folder field in Enapel.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={copyExamplePath}
+                            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700"
+                        >
+                            {copiedExamplePath ? 'Example Path Copied' : 'Copy Example Path'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mt-6 space-y-3">
+                    {guide.steps.map((step, index) => (
+                        <div key={step.title} className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-4">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-gray-900 text-xs font-black text-white">
+                                    {index + 1}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-gray-900">{step.title}</p>
+                                    <p className="mt-1 text-sm text-gray-700 leading-6">{step.detail}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
+                    <p className="font-black">Helpful tip</p>
+                    <p className="mt-2 leading-6">{guide.tip}</p>
+                </div>
+
+                <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                    Menu names can vary a little by Windows, macOS, or Linux version. If your screen looks slightly different, look for the same sharing options.
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function DisasterRecovery({
     settings,
     nodeState,
@@ -43,6 +401,7 @@ export default function DisasterRecovery({
     const { flash } = usePage().props;
     const [copiedSetupCode, setCopiedSetupCode] = React.useState(false);
     const [creatingSetupCode, setCreatingSetupCode] = React.useState(false);
+    const [sharingHelpOpen, setSharingHelpOpen] = React.useState(false);
     const settingsForm = useForm({
         node_name: settings?.node_name || nodeState?.node_name || '',
         node_role: settings?.node_role || nodeState?.role || 'primary',
@@ -80,6 +439,7 @@ export default function DisasterRecovery({
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
     const shouldShowConfirm = settingsForm.data.passphrase.length > 0;
     const hasSavedBackupPassword = Boolean(settings?.has_backup_password);
+    const detectedOs = React.useMemo(() => detectOperatingSystem(), []);
 
     const validateSettingsForm = () => {
         const errors = {};
@@ -180,6 +540,11 @@ export default function DisasterRecovery({
     return (
         <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
             <Head title="Backup Settings" />
+            <SharingHelpModal
+                show={sharingHelpOpen}
+                onClose={() => setSharingHelpOpen(false)}
+                detectedOs={detectedOs}
+            />
 
             <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
                 <div>
@@ -286,6 +651,13 @@ export default function DisasterRecovery({
                             <HelpText>
                                 This is where backup files are saved. Choose an already shared office folder. The app will not create a Windows network share automatically.
                             </HelpText>
+                            <button
+                                type="button"
+                                onClick={() => setSharingHelpOpen(true)}
+                                className="text-sm font-bold text-blue-600 hover:text-blue-700 text-left"
+                            >
+                                How do I share a folder on this {detectedOs === 'mac' ? 'Mac' : detectedOs === 'linux' ? 'Linux computer' : 'Windows computer'}?
+                            </button>
                             {settingsForm.errors.nas_path && <p className="text-sm font-semibold text-rose-600">{settingsForm.errors.nas_path}</p>}
                         </label>
 

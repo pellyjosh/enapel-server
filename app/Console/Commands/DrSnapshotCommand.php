@@ -13,14 +13,22 @@ class DrSnapshotCommand extends Command
 
     public function handle(DisasterRecoveryService $recovery): int
     {
-        $run = $recovery->runSnapshot(
-            type: (string) $this->option('type'),
-            full: (bool) $this->option('full'),
-            passphrase: $this->option('passphrase') ?: null,
-        );
+        try {
+            $run = $recovery->runSnapshot(
+                type: (string) $this->option('type'),
+                full: (bool) $this->option('full'),
+                passphrase: $this->option('passphrase') ?: null,
+            );
 
-        $this->info("Created {$run->type} bundle {$run->bundle_uuid}");
+            $this->info("Created {$run->type} bundle {$run->bundle_uuid}");
 
-        return self::SUCCESS;
+            return self::SUCCESS;
+        } catch (\RuntimeException $e) {
+            // Disaster Recovery is not yet configured (e.g. no NAS path set).
+            // Exit gracefully so the scheduler does not log a false alarm.
+            $this->line("<fg=gray>dr:snapshot skipped: {$e->getMessage()}</>");
+
+            return self::SUCCESS;
+        }
     }
 }

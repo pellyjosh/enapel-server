@@ -33,3 +33,28 @@ Enapel Server is a localized business management application designed to handle 
 php artisan native:serve --no-interaction # boots the NativePHP/Electron app
 npm run dev # starts Vite for hot-reloading
 composer run native:dev
+
+## Local macOS DMG build
+
+If you want to package `enapel-server` into a macOS `.dmg` directly on this Mac, use:
+
+```bash
+bash scripts/build-macos-dmg.sh
+```
+
+You can also target a specific architecture:
+
+```bash
+bash scripts/build-macos-dmg.sh arm64
+bash scripts/build-macos-dmg.sh x86
+bash scripts/build-macos-dmg.sh all
+```
+
+What the script does:
+
+- Backs up your current `.env` and restores it after the build.
+- Creates a clean production build env based on `.env.example`.
+- Forces the packaged app to use SQLite for a portable local build.
+- Installs dependencies, builds Vite assets, reapplies the NativePHP patch, and runs `php artisan native:build mac ...`.
+
+Build output is written to `dist/`.
