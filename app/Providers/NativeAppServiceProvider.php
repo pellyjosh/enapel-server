@@ -40,7 +40,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             ->height(800)
             ->backgroundColor('#f9fafb')
             ->rememberState()
-            ->showDevTools(true);
+            ->showDevTools(app()->isLocal());
     }
 
     /**
