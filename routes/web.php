@@ -196,6 +196,9 @@ Route::middleware(['auth', 'validate.license'])->group(function () {
     Route::get('/supermart/stock', [\App\Http\Controllers\SupermartController::class, 'stock'])->name('supermart.stock');
     Route::put('/supermart/stock/{id}', [\App\Http\Controllers\SupermartController::class, 'updateStock'])->name('supermart.stock.update');
     Route::get('/supermart/suppliers', [\App\Http\Controllers\SupermartController::class, 'suppliers'])->name('supermart.suppliers');
+    Route::post('/supermart/suppliers', [\App\Http\Controllers\SupermartController::class, 'storeSupplier'])->name('supermart.suppliers.store');
+    Route::put('/supermart/suppliers/{id}', [\App\Http\Controllers\SupermartController::class, 'updateSupplier'])->name('supermart.suppliers.update');
+    Route::delete('/supermart/suppliers/{id}', [\App\Http\Controllers\SupermartController::class, 'deleteSupplier'])->name('supermart.suppliers.delete');
     Route::get('/supermart/invoices', [\App\Http\Controllers\SupermartController::class, 'invoices'])->name('supermart.invoices');
     Route::get('/supermart/reports', [\App\Http\Controllers\SupermartController::class, 'reports'])->name('supermart.reports');
 

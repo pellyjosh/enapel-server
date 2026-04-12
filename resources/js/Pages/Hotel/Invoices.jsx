@@ -1,5 +1,5 @@
-import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head } from '@inertiajs/react';
 
 export default function Invoices({ bookings, orders }) {
@@ -7,7 +7,7 @@ export default function Invoices({ bookings, orders }) {
     // for now let's just show a bill generator for occupied rooms
     
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Guest Invoices" />
 
             <div>
@@ -52,9 +52,12 @@ export default function Invoices({ bookings, orders }) {
                     );
                 })}
                 {bookings.length === 0 && (
-                    <div className="col-span-full py-20 text-center opacity-40">
-                         <span className="text-6xl mb-4 block">🧾</span>
-                         <p className="font-black text-gray-500">No active stays to invoice.</p>
+                    <div className="col-span-full">
+                        <TablePlaceholder 
+                            title="No active stays found"
+                            description="There are currently no active guest bookings to generate invoices for. Check-in a guest to start billing for rooms and services."
+                            icon="🧾"
+                        />
                     </div>
                 )}
             </div>

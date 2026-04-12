@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -87,7 +88,7 @@ export default function Prescriptions({ prescriptions = [] }) {
     };
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Prescription Management" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -170,15 +171,16 @@ export default function Prescriptions({ prescriptions = [] }) {
                                     </tr>
                                 );
                             })}
-                            {prescriptions.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" className="p-20 text-center text-gray-400 font-medium">
-                                        No prescriptions found. Click "New Prescription" to add one.
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+
+                    {prescriptions.length === 0 && (
+                        <TablePlaceholder 
+                            title="No prescriptions"
+                            description="There are currently no patient prescriptions to display. Create a new prescription to start managing patient orders."
+                            icon="📄"
+                        />
+                    )}
                 </div>
             </div>
 

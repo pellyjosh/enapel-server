@@ -1,10 +1,10 @@
-import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head } from '@inertiajs/react';
 
 export default function Orders({ orders }) {
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Pharmacy Procurement" />
 
             <div>
@@ -38,13 +38,16 @@ export default function Orders({ orders }) {
                                     </td>
                                 </tr>
                             ))}
-                            {orders.length === 0 && (
-                                <tr>
-                                    <td colSpan="6" className="p-20 text-center text-gray-400 font-medium">No order history found.</td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+
+                    {orders.length === 0 && (
+                        <TablePlaceholder 
+                            title="No orders found"
+                            description="You haven't placed any refills for medications yet. Procurement history will appear here once orders are processed."
+                            icon="📜"
+                        />
+                    )}
                 </div>
             </div>
         </div>

@@ -4,6 +4,7 @@ import ConfirmationModal from '@/Components/ConfirmationModal';
 
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 
 export default function Categories({ categories = { data: [], links: [] } }) {
@@ -68,7 +69,7 @@ export default function Categories({ categories = { data: [], links: [] } }) {
 
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Supermart Categories" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -119,7 +120,11 @@ export default function Categories({ categories = { data: [], links: [] } }) {
             <Pagination links={categories.links} />
 
             {categoriesData.length === 0 && (
-                <div className="text-center text-gray-500 font-medium py-16">No categories yet. Add your first category.</div>
+                <TablePlaceholder 
+                    title="No categories"
+                    description="You haven't created any market categories yet. Organize your productos to make them easier to find."
+                    icon="📂"
+                />
             )}
 
             {isAdding && (

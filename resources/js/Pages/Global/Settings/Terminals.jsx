@@ -1,5 +1,5 @@
-import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head, useForm, router } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -12,7 +12,7 @@ export default function Terminals({ terminals }) {
     };
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Terminal Management" />
 
             {/* Header Section */}
@@ -80,12 +80,12 @@ export default function Terminals({ terminals }) {
                 })}
 
                 {terminals.length === 0 && (
-                    <div className="col-span-full py-16 text-center bg-gray-50 border border-dashed border-gray-300 rounded-3xl">
-                        <div className="w-16 h-16 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                            <svg className="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
-                        </div>
-                        <h3 className="text-lg font-black text-gray-900">No Terminals Found</h3>
-                        <p className="text-gray-500 max-w-md mx-auto mt-2 font-medium">There are currently no connected terminals in the database. Wait for a terminal to check into the server or manually register one.</p>
+                    <div className="col-span-full">
+                        <TablePlaceholder 
+                            title="No terminals found"
+                            description="There are currently no connected terminals in the system. New terminals will appear here once they check in or are manually registered."
+                            icon="🖥️"
+                        />
                     </div>
                 )}
             </div>

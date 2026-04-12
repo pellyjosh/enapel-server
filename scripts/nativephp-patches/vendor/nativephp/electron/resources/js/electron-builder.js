@@ -21,6 +21,7 @@ const azurePublisherName = process.env.NATIVEPHP_AZURE_PUBLISHER_NAME;
 const azureEndpoint = process.env.NATIVEPHP_AZURE_ENDPOINT;
 const azureCertificateProfileName = process.env.NATIVEPHP_AZURE_CERTIFICATE_PROFILE_NAME;
 const azureCodeSigningAccountName = process.env.NATIVEPHP_AZURE_CODE_SIGNING_ACCOUNT_NAME;
+const macosDeploymentTarget = process.env.MACOSX_DEPLOYMENT_TARGET || '10.15';
 
 // Since we do not copy the php executable here, we only need these for building
 const isWindows = process.argv.includes('--win');
@@ -113,6 +114,7 @@ export default {
         schemes: [deepLinkProtocol],
     },
     mac: {
+        minimumSystemVersion: macosDeploymentTarget,
         entitlementsInherit: 'build/entitlements.mac.plist',
         artifactName: appName + '-${version}-${arch}.${ext}',
         extendInfo: {

@@ -4,7 +4,7 @@ import { Head } from '@inertiajs/react';
 
 export default function Reports({ metrics }) {
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Hotel Reports" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

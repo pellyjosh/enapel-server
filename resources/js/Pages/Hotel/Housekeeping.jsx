@@ -1,5 +1,5 @@
-import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head, router } from '@inertiajs/react';
 
 export default function Housekeeping({ rooms }) {
@@ -18,7 +18,7 @@ export default function Housekeeping({ rooms }) {
     };
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Housekeeping Management" />
 
             <div>
@@ -72,6 +72,13 @@ export default function Housekeeping({ rooms }) {
                     </div>
                 ))}
             </div>
+            {rooms.length === 0 && (
+                <TablePlaceholder 
+                    title="No housekeeping data"
+                    description="There are no rooms currently configured for housekeeping tracking. Add rooms to the hotel module to start managing cleanliness."
+                    icon="🧹"
+                />
+            )}
         </div>
     );
 }

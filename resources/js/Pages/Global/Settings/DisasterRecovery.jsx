@@ -1,7 +1,7 @@
-import React from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 function formatAgo(value) {
     if (!value) {
@@ -538,7 +538,7 @@ export default function DisasterRecovery({
     };
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8">
             <Head title="Backup Settings" />
             <SharingHelpModal
                 show={sharingHelpOpen}
@@ -985,9 +985,11 @@ export default function DisasterRecovery({
                                 <p className="text-sm text-gray-600 mt-2">{formatAgo(backup.completed_at || backup.started_at)}</p>
                             </div>
                         )) : (
-                            <div className="rounded-3xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-medium">
-                                No backups yet.
-                            </div>
+                            <TablePlaceholder 
+                                title="No backups recorded"
+                                description="The local activity log does not show any recent backup operations. Start a backup to see entries here."
+                                icon="📦"
+                            />
                         )}
                     </div>
 
@@ -1000,9 +1002,11 @@ export default function DisasterRecovery({
                                 <p className="text-sm text-gray-600 mt-2">{bundle.path}</p>
                             </div>
                         )) : (
-                            <div className="rounded-3xl border border-dashed border-gray-300 p-8 text-center text-gray-500 font-medium">
-                                No backup files found yet.
-                            </div>
+                            <TablePlaceholder 
+                                title="No backup files found"
+                                description="We couldn't detect any valid Enapel backup bundles in the configured shared folder. Ensure the path is correct and accessible."
+                                icon="🔍"
+                            />
                         )}
                     </div>
                 </div>

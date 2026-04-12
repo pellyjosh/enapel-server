@@ -43,7 +43,7 @@ class PharmacyController extends Controller
 
     public function catalog()
     {
-        $drugs = Inventory::where('category', 'LIKE', '%drug%')->latest()->get();
+        $drugs = Inventory::where('category', 'LIKE', '%drug%')->latest()->paginate(15);
         return Inertia::render('Pharmacy/DrugCatalog', ['drugs' => $drugs]);
     }
 
@@ -170,13 +170,13 @@ class PharmacyController extends Controller
                 $q->where('category', 'LIKE', '%drug%');
             })
             ->latest()
-            ->get();
+            ->paginate(15);
         return Inertia::render('Pharmacy/Sales', ['sales' => $sales]);
     }
 
     public function stock()
     {
-        $inventory = Inventory::where('category', 'LIKE', '%drug%')->latest()->get();
+        $inventory = Inventory::where('category', 'LIKE', '%drug%')->latest()->paginate(15);
         return Inertia::render('Pharmacy/Stock', ['inventory' => $inventory]);
     }
 
@@ -211,11 +211,11 @@ class PharmacyController extends Controller
 
     public function alerts()
     {
-        $lowStock = Inventory::where('category', 'LIKE', '%drug%')->where('quantity', '<=', 10)->get();
+        $lowStock = Inventory::where('category', 'LIKE', '%drug%')->where('quantity', '<=', 10)->paginate(15, ['*'], 'lowStockPage');
         $expiring = Inventory::where('category', 'LIKE', '%drug%')
             ->whereNotNull('expiry_date')
             ->where('expiry_date', '<', now()->addDays(30))
-            ->get();
+            ->paginate(15, ['*'], 'expiringPage');
         return Inertia::render('Pharmacy/Alerts', [
             'lowStock' => $lowStock,
             'expiring' => $expiring

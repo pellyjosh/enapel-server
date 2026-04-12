@@ -1,10 +1,10 @@
-import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head } from '@inertiajs/react';
 
 export default function Suppliers({ suppliers }) {
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Pharmacy Suppliers" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -39,8 +39,12 @@ export default function Suppliers({ suppliers }) {
                     </div>
                 ))}
                 {suppliers.length === 0 && (
-                    <div className="col-span-full py-20 text-center opacity-40 italic">
-                         <p className="font-black text-gray-500">No suppliers registered yet.</p>
+                    <div className="col-span-full">
+                        <TablePlaceholder 
+                            title="No suppliers found"
+                            description="You haven't registered any medical suppliers yet. Add your first vendor to start managing procurement."
+                            icon="🚚"
+                        />
                     </div>
                 )}
             </div>

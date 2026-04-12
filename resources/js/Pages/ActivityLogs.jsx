@@ -1,6 +1,6 @@
-import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 export default function ActivityLogs({ logs }) {
     return (
@@ -8,7 +8,7 @@ export default function ActivityLogs({ logs }) {
             <Head title="Activity Logs" />
 
             <div className="py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
+                <div className="">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div>
                             <h1 className="text-4xl font-black text-gray-900 tracking-tight">Activity Logs</h1>
@@ -73,15 +73,16 @@ export default function ActivityLogs({ logs }) {
                                             </td>
                                         </tr>
                                     ))}
-                                    {logs.data.length === 0 && (
-                                        <tr>
-                                            <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                                                No activity logs found.
-                                            </td>
-                                        </tr>
-                                    )}
                                 </tbody>
                             </table>
+
+                            {logs.data.length === 0 && (
+                                <TablePlaceholder 
+                                    title="No activity recorded"
+                                    description="No system events or user actions have been logged yet. Activity will appear here as users interact with the system."
+                                    icon="📜"
+                                />
+                            )}
                         </div>
 
                         {/* Pagination */}

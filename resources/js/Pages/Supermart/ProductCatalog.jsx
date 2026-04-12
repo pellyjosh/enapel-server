@@ -3,15 +3,17 @@ import Pagination from '@/Components/Pagination';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 
 import { Head, useForm, router } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 
-export default function ProductCatalog({ products = { data: [], links: [] }, categories = [] }) {
+export default function ProductCatalog({ products = { data: [], links: [] }, categories = [], all_products = [] }) {
     const productsData = products.data || [];
     const [searchTerm, setSearchTerm] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
 
 
     const categoryOptions = useMemo(
@@ -33,6 +35,14 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
         description: '',
         quantity: '',
         price: '',
+        cost_price: '',
+        unit_name: 'Piece',
+        units_per_pack: 1,
+        pack_price_override: '',
+        packs_per_carton: 1,
+        carton_price_override: '',
+        parent_id: '',
+        variation_name: '',
     });
 
     const {
@@ -49,6 +59,14 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
         description: '',
         quantity: '',
         price: '',
+        cost_price: '',
+        unit_name: '',
+        units_per_pack: '',
+        pack_price_override: '',
+        packs_per_carton: '',
+        carton_price_override: '',
+        parent_id: '',
+        variation_name: '',
     });
 
     const filteredProducts = productsData.filter(p =>
@@ -75,6 +93,14 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
             description: product.description || '',
             quantity: product.quantity ?? '',
             price: product.price ?? '',
+            cost_price: product.cost_price ?? '',
+            unit_name: product.unit_name || 'Piece',
+            units_per_pack: product.units_per_pack || 1,
+            pack_price_override: product.pack_price_override ?? '',
+            packs_per_carton: product.packs_per_carton || 1,
+            carton_price_override: product.carton_price_override ?? '',
+            parent_id: product.parent_id ?? '',
+            variation_name: product.variation_name || '',
         });
     };
 
@@ -93,14 +119,36 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
     const handleDelete = () => {
         if (!productToDelete) return;
         router.delete(route('supermart.catalog.delete', productToDelete.id), {
-            onFinish: () => setProductToDelete(null)
+            onSuccess: () => {
+                setProductToDelete(null);
+                setDeleteError(null);
+            },
+            onError: (errors) => {
+                setProductToDelete(null);
+                setDeleteError(errors.delete || 'Could not delete the product.');
+            },
         });
+    };
+
+    const hasInventory = (product) => {
+        if (Number(product.quantity || 0) > 0) return true;
+        return (product.variations || []).some(v => Number(v.quantity || 0) > 0);
     };
 
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Products Catalog" />
+
+            {deleteError && (
+                <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl px-5 py-4 shadow-sm">
+                    <svg className="w-5 h-5 mt-0.5 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p className="text-sm font-semibold flex-1">{deleteError}</p>
+                    <button onClick={() => setDeleteError(null)} className="text-rose-400 hover:text-rose-700 transition-colors">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            )}
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -138,9 +186,13 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100 uppercase text-[10px] font-black tracking-widest text-gray-400">
                                 <th className="p-4 pl-6">Product / Brand</th>
+                                <th className="p-4 font-black">SKU</th>
+                                <th className="p-4 text-center">Unit</th>
                                 <th className="p-4">Category</th>
-                                <th className="p-4">Aisle Quantity</th>
-                                <th className="p-4 text-right">Retail Price</th>
+                                <th className="p-4">Stock Level</th>
+                                <th className="p-4 text-right">Cost</th>
+                                <th className="p-4 text-right">Retail</th>
+                                <th className="p-4 text-center">Margin</th>
                                 <th className="p-4 pr-6 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -148,75 +200,150 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             {filteredProducts.map(product => {
                                 const quantity = Number(product.quantity || 0);
                                 const isLowStock = quantity <= 15;
+                                const margin = product.price > 0 
+                                    ? ((product.price - product.cost_price) / product.price) * 100 
+                                    : 0;
 
                                 return (
-                                    <tr key={product.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="p-4 pl-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-50 to-amber-100 text-orange-500 flex items-center justify-center shrink-0 border border-orange-200">
-                                                    🥫
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-bold text-gray-900 leading-tight">{product.name}</p>
-                                                        {product.sku && (
-                                                            <span className="text-[9px] bg-gray-900 text-white px-1.5 py-0.5 rounded font-mono uppercase tracking-tighter">
-                                                                {product.sku}
-                                                            </span>
-                                                        )}
+                                    <React.Fragment key={product.id}>
+                                        <tr className="hover:bg-blue-50/30 transition-colors group">
+                                            <td className="p-4 pl-6">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-500 flex items-center justify-center shrink-0 border border-blue-200">
+                                                        🥫
                                                     </div>
-                                                    <p className="text-xs text-gray-500 truncate max-w-[200px]">{product.description || 'General Merchandise'}</p>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-bold text-gray-900 leading-tight">{product.name}</p>
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 truncate max-w-[200px]">{product.description || 'General Merchandise'}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200 text-gray-600 block w-max uppercase">
-                                                {product.category || 'Retail'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1 w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                                    <div 
-                                                        className={`h-full rounded-full ${isLowStock ? 'bg-orange-500' : 'bg-emerald-500'}`}
-                                                        style={{ width: `${Math.min(100, (quantity / 100) * 100)}%` }}
-                                                    ></div>
+                                            </td>
+                                            <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
+                                                {product.sku || 'N/A'}
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-tighter">
+                                                    {product.unit_name}
+                                                    {product.units_per_pack > 1 && ` (x${product.units_per_pack})`}
+                                                    {product.packs_per_carton > 1 && ` [📦 x${product.packs_per_carton}]`}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200 text-gray-600 block w-max uppercase">
+                                                    {product.category || 'Retail'}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex-1 w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div 
+                                                            className={`h-full rounded-full ${isLowStock ? 'bg-orange-500' : 'bg-emerald-500'}`}
+                                                            style={{ width: `${Math.min(100, (quantity / 100) * 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className={`text-sm font-bold ${isLowStock ? 'text-orange-500' : 'text-gray-900'}`}>{quantity}</span>
                                                 </div>
-                                                <span className={`text-sm font-bold ${isLowStock ? 'text-orange-500' : 'text-gray-900'}`}>{quantity}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <span className="font-black text-gray-900">₦{Number(product.price || 0).toLocaleString()}</span>
-                                        </td>
-                                        <td className="p-4 pr-6 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openEdit(product)}
-                                                    className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setProductToDelete(product)}
-                                                    className="text-rose-600 hover:text-rose-800 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg"
-                                                >
-                                                    Delete
-                                                </button>
-
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <span className="text-xs text-gray-400 font-medium">₦{Number(product.cost_price || 0).toLocaleString()}</span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <span className="font-black text-gray-900">₦{Number(product.price || 0).toLocaleString()}</span>
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <span className={`text-[10px] font-black px-2 py-1 rounded-full ${margin > 20 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                    {margin.toFixed(0)}%
+                                                </span>
+                                            </td>
+                                            <td className="p-4 pr-6 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEdit(product)}
+                                                        className="text-blue-600 hover:text-blue-800 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    {hasInventory(product) ? (
+                                                        <span
+                                                            title={`Cannot delete — product still has ${Number(product.quantity || 0)} unit(s) in inventory. Reduce stock to zero first.`}
+                                                            className="text-gray-400 font-bold text-xs bg-gray-100 px-3 py-1.5 rounded-lg cursor-not-allowed select-none"
+                                                        >
+                                                            Delete
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setProductToDelete(product)}
+                                                            className="text-rose-600 hover:text-rose-800 font-bold text-xs bg-rose-50 px-3 py-1.5 rounded-lg"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {/* Render Variations */}
+                                        {(product.variations || []).map(variation => (
+                                            <tr key={variation.id} className="bg-gray-50/30 hover:bg-blue-50/50 transition-colors group">
+                                                <td className="p-3 pl-12 border-l-4 border-blue-100">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[10px]">
+                                                            ↳
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-sm text-gray-700">{variation.variation_name || variation.name}</p>
+                                                            {variation.sku && <span className="text-[8px] text-gray-400 font-mono">{variation.sku}</span>}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <span className="text-[9px] font-bold text-gray-500">{variation.unit_name}</span>
+                                                </td>
+                                                <td className="p-3"></td>
+                                                <td className="p-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[11px] font-bold ${variation.quantity <= 10 ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                            {variation.quantity}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 text-right">
+                                                    <span className="text-[10px] text-gray-400 font-medium">₦{Number(variation.cost_price || 0).toLocaleString()}</span>
+                                                </td>
+                                                <td className="p-3 text-right">
+                                                    <span className="font-black text-sm text-gray-800">₦{Number(variation.price || 0).toLocaleString()}</span>
+                                                </td>
+                                                <td className="p-3"></td>
+                                                <td className="p-3 pr-6 text-right">
+                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEdit(variation)}
+                                                            className="text-blue-600 hover:text-blue-800 font-bold text-[10px] bg-white border border-blue-100 px-2 py-1 rounded-lg"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
                                 );
                             })}
                         </tbody>
                     </table>
 
                     {filteredProducts.length === 0 && (
-                        <div className="p-12 text-center text-gray-500 font-medium">
-                            No retail items found matching your criteria.
-                        </div>
+                        <TablePlaceholder 
+                            title={searchTerm ? "No matches found" : "Catalog is empty"}
+                            description={searchTerm 
+                                ? `We couldn't find any products matching "${searchTerm}". Try a different search term.` 
+                                : "Your product catalog is currently empty. Add your first retail product to get started."}
+                            icon="🥫"
+                        />
                     )}
                 </div>
             </div>
@@ -287,33 +414,103 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                     {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retail Price (₦)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={data.price}
-                                        onChange={e => setData('price', e.target.value)}
-                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                        placeholder="2000"
-                                        required
-                                    />
-                                    {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Description</label>
-                                    <input
-                                        type="text"
-                                        value={data.description}
-                                        onChange={e => setData('description', e.target.value)}
-                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                        placeholder="Family breakfast cereal"
-                                    />
-                                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retail Price (₦)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={data.price}
+                                    onChange={e => setData('price', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    placeholder="2000"
+                                    required
+                                />
+                                {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cost Price (₦)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={data.cost_price}
+                                    onChange={e => setData('cost_price', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    placeholder="1500"
+                                />
+                                {errors.cost_price && <p className="text-red-500 text-xs mt-1">{errors.cost_price}</p>}
+                            </div>
+                        </div>
+
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs / Carton</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={data.packs_per_carton}
+                                    onChange={e => setData('packs_per_carton', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (Optional)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={data.carton_price_override}
+                                    onChange={e => setData('carton_price_override', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    placeholder="Bulk rate for carton"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Is this a variation of?</label>
+                                <select
+                                    value={data.parent_id}
+                                    onChange={e => setData('parent_id', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-xs"
+                                >
+                                    <option value="">(None - Main Product)</option>
+                                    {all_products.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Variation Label</label>
+                                <input
+                                    type="text"
+                                    value={data.variation_name}
+                                    onChange={e => setData('variation_name', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    placeholder="e.g. Vanilla, 500g, Large"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Internal Description</label>
+                                <input
+                                    type="text"
+                                    value={data.description}
+                                    onChange={e => setData('description', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    placeholder="Family breakfast cereal"
+                                />
+                                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                            </div>
+                        </div>
                         </div>
 
                         <button
@@ -388,31 +585,95 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                     {editErrors.quantity && <p className="text-red-500 text-xs mt-1">{editErrors.quantity}</p>}
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retail Price (₦)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={editData.price}
-                                        onChange={e => setEditData('price', e.target.value)}
-                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                        required
-                                    />
-                                    {editErrors.price && <p className="text-red-500 text-xs mt-1">{editErrors.price}</p>}
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Description</label>
-                                    <input
-                                        type="text"
-                                        value={editData.description}
-                                        onChange={e => setEditData('description', e.target.value)}
-                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                    />
-                                    {editErrors.description && <p className="text-red-500 text-xs mt-1">{editErrors.description}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retail Price (₦)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={editData.price}
+                                    onChange={e => setEditData('price', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cost Price (₦)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={editData.cost_price}
+                                    onChange={e => setEditData('cost_price', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                        </div>
+
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs / Carton</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={editData.packs_per_carton}
+                                    onChange={e => setEditData('packs_per_carton', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (Optional)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={editData.carton_price_override}
+                                    onChange={e => setEditData('carton_price_override', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Is this a variation of?</label>
+                                <select
+                                    value={editData.parent_id}
+                                    onChange={e => setEditData('parent_id', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-xs"
+                                >
+                                    <option value="">(None - Main Product)</option>
+                                    {all_products.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Variation Label</label>
+                                <input
+                                    type="text"
+                                    value={editData.variation_name}
+                                    onChange={e => setEditData('variation_name', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Description</label>
+                                <input
+                                    type="text"
+                                    value={editData.description}
+                                    onChange={e => setEditData('description', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                />
+                            </div>
+                        </div>
                         </div>
 
                         <button

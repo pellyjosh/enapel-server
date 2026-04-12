@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Rooms({ rooms, categories }) {
@@ -22,7 +22,7 @@ export default function Rooms({ rooms, categories }) {
     };
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Room Management" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -62,9 +62,12 @@ export default function Rooms({ rooms, categories }) {
                     </div>
                 ))}
                 {rooms.length === 0 && (
-                    <div className="col-span-full py-20 text-center opacity-40">
-                         <span className="text-6xl mb-4 block">🏢</span>
-                         <p className="font-black text-gray-500">No rooms configured yet.</p>
+                    <div className="col-span-full">
+                        <TablePlaceholder 
+                            title="No rooms configured"
+                            description="You haven't added any hotel rooms yet. Create your rooms to start accepting bookings."
+                            icon="🏨"
+                        />
                     </div>
                 )}
             </div>

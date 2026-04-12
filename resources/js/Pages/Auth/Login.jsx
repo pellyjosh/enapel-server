@@ -117,9 +117,9 @@ export default function Login() {
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">
                                         Password
                                     </label>
-                                    <a href="/forgot-password" className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition-colors">
+                                    <Link href="/forgot-password" className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition-colors">
                                         Forgot password?
-                                    </a>
+                                    </Link>
                                 </div>
                                 <input
                                     type="password"
@@ -168,9 +168,9 @@ export default function Login() {
 
                         <p className="text-center text-gray-500 text-sm mt-6">
                             New installation?{' '}
-                            <a href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-                                Activate with License Key
-                            </a>
+                            <Link href="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                                Activation with License Key
+                            </Link>
                         </p>
 
                         <p className="text-center text-gray-500 text-sm mt-3">

@@ -68,6 +68,8 @@ if [[ -z "$ARCH" ]]; then
   exit 1
 fi
 
+export MACOSX_DEPLOYMENT_TARGET="10.15"
+
 for cmd in php composer npm; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "Missing required command: $cmd" >&2

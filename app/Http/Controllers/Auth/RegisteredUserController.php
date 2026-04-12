@@ -122,7 +122,7 @@ class RegisteredUserController extends Controller
             // Handle company logo
             $logoUrl = $licenseData['tenant']['company_logo_url'] ?? $request->logo;
             Log::info('Register: Handling logo', ['url' => $logoUrl]);
-            $fileName = 'logos/default_logo.png';
+            $fileName = null;
             if ($logoUrl) {
                 try {
                     $imageContent = Http::timeout(5)

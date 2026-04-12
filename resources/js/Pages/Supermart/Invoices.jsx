@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Pagination';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -16,7 +17,7 @@ export default function Invoices({ receipts = { data: [], links: [] } }) {
         }, 100);
     };
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Supermart Invoices" />
 
             <div>
@@ -59,8 +60,12 @@ export default function Invoices({ receipts = { data: [], links: [] } }) {
                     </div>
                 ))}
                 {receiptsData.length === 0 && (
-                    <div className="col-span-full py-20 text-center opacity-40 italic">
-                         <p className="font-black text-gray-400">No sales invoices generated today.</p>
+                    <div className="col-span-full">
+                        <TablePlaceholder 
+                            title="No invoices found"
+                            description="No sales invoices have been generated today. Complete a transaction in the POS to see receipts here."
+                            icon="🧾"
+                        />
                     </div>
                 )}
             </div>

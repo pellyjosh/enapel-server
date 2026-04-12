@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -54,7 +55,7 @@ export default function Stock({ inventory = [] }) {
 
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Pharmacy Inventory" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -133,6 +134,14 @@ export default function Stock({ inventory = [] }) {
                             })}
                         </tbody>
                     </table>
+
+                    {inventory.length === 0 && (
+                        <TablePlaceholder 
+                            title="No medications found"
+                            description="Your pharmacy inventory is currently empty. Add medications to the catalog to start tracking stock."
+                            icon="💊"
+                        />
+                    )}
                 </div>
             </div>
 

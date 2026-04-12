@@ -23,7 +23,7 @@ class HotelController extends Controller
 
     public function bookings()
     {
-        $bookings = \App\Models\Booking::with(['guest', 'room'])->latest()->get();
+        $bookings = \App\Models\Booking::with(['guest', 'room'])->latest()->paginate(15);
         $guests = \App\Models\Guest::all();
         $rooms = \App\Models\Room::where('status', 'available')->get();
         return Inertia::render('Hotel/Bookings', [
@@ -35,7 +35,7 @@ class HotelController extends Controller
 
     public function guests()
     {
-        $guests = \App\Models\Guest::latest()->get();
+        $guests = \App\Models\Guest::latest()->paginate(15);
         return Inertia::render('Hotel/Guests', ['guests' => $guests]);
     }
 
@@ -138,7 +138,7 @@ class HotelController extends Controller
 
     public function invoices()
     {
-        $bookings = \App\Models\Booking::with(['guest', 'room', 'room_service'])->where('status', 'confirmed')->get();
+        $bookings = \App\Models\Booking::with(['guest', 'room', 'room_service'])->where('status', 'confirmed')->latest()->paginate(15);
         return Inertia::render('Hotel/Invoices', ['bookings' => $bookings]);
     }
 

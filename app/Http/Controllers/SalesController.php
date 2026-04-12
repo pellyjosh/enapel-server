@@ -14,10 +14,12 @@ class SalesController extends Controller
     public function checkout(Request $request)
     {
         try {
-            $validatedData = $request->validate([
+                $validatedData = $request->validate([
                 'items' => 'required|array',
                 'items.*.id' => 'required|exists:inventories,id',
                 'items.*.quantity' => 'required|integer|min:1',
+                'items.*.is_pack' => 'nullable|boolean',
+                'items.*.is_carton' => 'nullable|boolean',
                 'payment_method' => 'required|string',
                 'cash_paid' => 'nullable|numeric',
             ]);
@@ -27,18 +29,43 @@ class SalesController extends Controller
 
             foreach ($validatedData['items'] as $itemData) {
                 $inventory = \App\Models\Api\Inventory::find($itemData['id']);
-                if ($inventory->quantity < $itemData['quantity']) {
+                $isPack = $itemData['is_pack'] ?? false;
+                $isCarton = $itemData['is_carton'] ?? false;
+                
+                // Prioritize carton over pack for deduction logic
+                if ($isCarton) {
+                    $deductQty = $inventory->packs_per_carton * $inventory->units_per_pack * $itemData['quantity'];
+                    $price = $inventory->carton_price_override ?? (
+                        ($inventory->pack_price_override ?? ($inventory->price * $inventory->units_per_pack)) * $inventory->packs_per_carton
+                    );
+                    $sellingUnit = "Carton of {$inventory->packs_per_carton} packs";
+                } elseif ($isPack) {
+                    $deductQty = $inventory->units_per_pack * $itemData['quantity'];
+                    $price = $inventory->pack_price_override ?? ($inventory->price * $inventory->units_per_pack);
+                    $sellingUnit = "Pack of {$inventory->units_per_pack}";
+                } else {
+                    $deductQty = $itemData['quantity'];
+                    $price = $inventory->price;
+                    $sellingUnit = $inventory->unit_name;
+                }
+
+                if ($inventory->quantity < $deductQty) {
                     return response()->json([
                         'success' => false,
                         'message' => "Insufficient stock for " . ($inventory->product_name ?? $inventory->name),
                     ], 400);
                 }
 
-                $totalReceiptPrice += $inventory->price * $itemData['quantity'];
+                $totalReceiptPrice += $price * $itemData['quantity'];
+                
                 $itemsToProcess[] = [
                     'inventory' => $inventory,
                     'quantity' => $itemData['quantity'],
-                    'price' => $inventory->price
+                    'deduct_qty' => $deductQty,
+                    'is_pack' => $isPack,
+                    'is_carton' => $isCarton,
+                    'price' => $price,
+                    'selling_unit' => $sellingUnit
                 ];
             }
 
@@ -59,18 +86,20 @@ class SalesController extends Controller
 
             foreach ($itemsToProcess as $processItem) {
                 $inventory = $processItem['inventory'];
-                $qty = $processItem['quantity'];
-
+                
                 Sales::create([
                     'receipt_id' => $receipt->id,
                     'product_id' => $inventory->id,
                     'product_name' => $inventory->product_name ?? $inventory->name,
                     'product_sku' => $inventory->sku,
-                    'quantity' => $qty,
+                    'quantity' => $processItem['quantity'],
+                    'is_pack' => $processItem['is_pack'],
+                    'is_carton' => $processItem['is_carton'],
+                    'selling_unit' => $processItem['selling_unit'],
                     'price' => $processItem['price'],
                 ]);
 
-                $inventory->decrement('quantity', $qty);
+                $inventory->decrement('quantity', $processItem['deduct_qty']);
             }
 
             return response()->json([
@@ -78,6 +107,7 @@ class SalesController extends Controller
                 'message' => 'Checkout successful',
                 'receipt_number' => $receipt->receipt_number,
                 'total_price' => $totalReceiptPrice,
+                'cart_items' => $itemsToProcess, // Returning processed items for receipt clarity
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

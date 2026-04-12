@@ -37,10 +37,17 @@ class NodeStateService
         $decoded = json_decode($payload, true);
 
         if (is_array($decoded) && isset($decoded['ciphertext'])) {
-            $json = Crypt::decryptString($decoded['ciphertext']);
-            $state = json_decode($json, true);
+            try {
+                $json = Crypt::decryptString($decoded['ciphertext']);
+                $state = json_decode($json, true);
 
-            return is_array($state) ? array_replace_recursive($this->defaults(), $state) : $this->defaults();
+                return is_array($state) ? array_replace_recursive($this->defaults(), $state) : $this->defaults();
+            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                $state = $this->defaults();
+                $this->save($state);
+
+                return $state;
+            }
         }
 
         return is_array($decoded) ? array_replace_recursive($this->defaults(), $decoded) : $this->defaults();

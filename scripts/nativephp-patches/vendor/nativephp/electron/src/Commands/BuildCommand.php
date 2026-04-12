@@ -162,6 +162,7 @@ class BuildCommand extends Command
                 'NATIVEPHP_AZURE_ENDPOINT' => config('nativephp-internal.azure_trusted_signing.endpoint'),
                 'NATIVEPHP_AZURE_CERTIFICATE_PROFILE_NAME' => config('nativephp-internal.azure_trusted_signing.certificate_profile_name'),
                 'NATIVEPHP_AZURE_CODE_SIGNING_ACCOUNT_NAME' => config('nativephp-internal.azure_trusted_signing.code_signing_account_name'),
+                'MACOSX_DEPLOYMENT_TARGET' => getenv('MACOSX_DEPLOYMENT_TARGET') ?: '10.15',
             ],
             Updater::environmentVariables(),
         );

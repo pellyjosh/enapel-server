@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { 
+    LayoutDashboard, Globe, History, Settings, Monitor, LifeBuoy, 
+    Hotel, Pill, ShoppingCart, Users, Banknote, Wallet, FileText,
+    LogOut, Search, Bell, ChevronLeft, Menu, Calendar, UserCheck, 
+    Bed, Brush, Footprints, CreditCard, Layout, Package, AlertCircle, 
+    Truck, FilePlus, Handshake
+} from 'lucide-react';
+import PageTransition from '../Components/PageTransition';
 
 export default function AuthenticatedLayout({ children }) {
     const { url, props } = usePage();
@@ -41,87 +49,87 @@ export default function AuthenticatedLayout({ children }) {
         }
     }, [currentModule, enabledModules]);
 
-    const logoSrc = branding?.logo ? `/storage/${branding.logo}` : null;
+    const logoSrc = branding?.logo ? (branding.logo.startsWith('http') || branding.logo.startsWith('/storage') ? branding.logo : `/storage/${branding.logo}`) : null;
     const brandName = branding?.name || 'Enapel';
 
     // The modules the user can switch between
     const availableModules = [
-        { id: 'global', name: 'Global / Overview', icon: '🌍' },
-        ...(enabledModules.includes('hotel') ? [{ id: 'hotel', name: 'Hotel Management', icon: '🏨' }] : []),
-        ...(enabledModules.includes('pharmacy') ? [{ id: 'pharmacy', name: 'Pharmacy', icon: '💊' }] : []),
-        ...(enabledModules.includes('supermart') ? [{ id: 'supermart', name: 'Supermart / Retail', icon: '🛒' }] : []),
+        { id: 'global', name: 'Global / Overview', icon: <Globe className="w-5 h-5" /> },
+        ...(enabledModules.includes('hotel') ? [{ id: 'hotel', name: 'Hotel Management', icon: <Hotel className="w-5 h-5" /> }] : []),
+        ...(enabledModules.includes('pharmacy') ? [{ id: 'pharmacy', name: 'Pharmacy', icon: <Pill className="w-5 h-5" /> }] : []),
+        ...(enabledModules.includes('supermart') ? [{ id: 'supermart', name: 'Supermart / Retail', icon: <ShoppingCart className="w-5 h-5" /> }] : []),
     ];
 
     // Navigation Menus based on the selected module
     const navigationLinks = {
         global: [
             { section: 'Overview' },
-            { name: 'Dashboard', href: '/dashboard?module=global', icon: '📊', active: true },
-            { name: 'Activity Logs', href: '/activity-logs', icon: '🗒️' },
-            { name: 'Analytics & Reports', href: '#', icon: '📈' },
+            { name: 'Dashboard', href: '/dashboard?module=global', icon: <LayoutDashboard className="w-5 h-5" />, active: true },
+            { name: 'Activity Logs', href: '/activity-logs', icon: <History className="w-5 h-5" /> },
+            { name: 'Analytics & Reports', href: '#', icon: <Layout className="w-5 h-5" /> },
             { section: 'Company Management' },
-            { name: 'Staff & HR', href: '#', icon: '👥' },
-            { name: 'Payroll', href: '#', icon: '💸' },
-            { name: 'Finance & Accounting', href: '#', icon: '💰' },
-            { name: 'Expenses', href: '#', icon: '🧾' },
+            { name: 'Staff & HR', href: '#', icon: <Users className="w-5 h-5" /> },
+            { name: 'Payroll', href: '#', icon: <Banknote className="w-5 h-5" /> },
+            { name: 'Finance & Accounting', href: '#', icon: <Wallet className="w-5 h-5" /> },
+            { name: 'Expenses', href: '#', icon: <FileText className="w-5 h-5" /> },
             { section: 'Global Settings' },
-            { name: 'Terminals & Devices', href: '/global/settings/terminals', icon: '💻' },
-            { name: 'Disaster Recovery', href: '/global/settings/disaster-recovery', icon: '🛟' },
-            { name: 'System Settings', href: '#', icon: '⚙️' },
+            { name: 'Terminals & Devices', href: '/global/settings/terminals', icon: <Monitor className="w-5 h-5" /> },
+            { name: 'Disaster Recovery', href: '/global/settings/disaster-recovery', icon: <LifeBuoy className="w-5 h-5" /> },
+            { name: 'System Settings', href: '#', icon: <Settings className="w-5 h-5" /> },
         ],
         hotel: [
             { section: 'Front Desk' },
-            { name: 'Hotel Dashboard', href: '/hotel/dashboard', icon: '📊' },
-            { name: 'Bookings & Reservations', href: '/hotel/bookings', icon: '📅' },
-            { name: 'Guest Management', href: '/hotel/guests', icon: '🧑‍🤝‍🧑' },
+            { name: 'Hotel Dashboard', href: '/hotel/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+            { name: 'Bookings & Reservations', href: '/hotel/bookings', icon: <Calendar className="w-5 h-5" /> },
+            { name: 'Guest Management', href: '/hotel/guests', icon: <Users className="w-5 h-5" /> },
             { section: 'Operations' },
-            { name: 'Rooms & Layout', href: '/hotel/rooms', icon: '🛏️' },
-            { name: 'Housekeeping', href: '/hotel/housekeeping', icon: '🧹' },
-            { name: 'Room Service', href: '/hotel/roomservice', icon: '🍽️' },
+            { name: 'Rooms & Layout', href: '/hotel/rooms', icon: <Bed className="w-5 h-5" /> },
+            { name: 'Housekeeping', href: '/hotel/housekeeping', icon: <Brush className="w-5 h-5" /> },
+            { name: 'Room Service', href: '/hotel/roomservice', icon: <Footprints className="w-5 h-5" /> },
             { section: 'Finance' },
-            { name: 'Invoices & Billing', href: '/hotel/invoices', icon: '💳' },
-            { name: 'Hotel Reports', href: '/hotel/reports', icon: '📊' },
-            { name: 'Hotel Settings', href: '/hotel/settings', icon: '🛠️' },
+            { name: 'Invoices & Billing', href: '/hotel/invoices', icon: <CreditCard className="w-5 h-5" /> },
+            { name: 'Hotel Reports', href: '/hotel/reports', icon: <Layout className="w-5 h-5" /> },
+            { name: 'Hotel Settings', href: '/hotel/settings', icon: <Settings className="w-5 h-5" /> },
         ],
         pharmacy: [
             { section: 'Sales & Dispensing' },
-            { name: 'Pharmacy Dashboard', href: '/pharmacy/dashboard', icon: '📊' },
-            { name: 'Point of Sale (POS)', href: '/pharmacy/pos', icon: '💳' },
-            { name: 'Prescriptions', href: '/pharmacy/prescriptions', icon: '📝' },
-            { name: 'Customer Sales', href: '/pharmacy/sales', icon: '🛍️' },
+            { name: 'Pharmacy Dashboard', href: '/pharmacy/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+            { name: 'Point of Sale (POS)', href: '/pharmacy/pos', icon: <CreditCard className="w-5 h-5" /> },
+            { name: 'Prescriptions', href: '/pharmacy/prescriptions', icon: <FilePlus className="w-5 h-5" /> },
+            { name: 'Customer Sales', href: '/pharmacy/sales', icon: <ShoppingCart className="w-5 h-5" /> },
             { section: 'Inventory Management' },
-            { name: 'Drug Catalog', href: '/pharmacy/catalog', icon: '💊' },
-            { name: 'Stock & Batches', href: '/pharmacy/stock', icon: '📦' },
-            { name: 'Expiry Alerts', href: '/pharmacy/alerts', icon: '⚠️' },
+            { name: 'Drug Catalog', href: '/pharmacy/catalog', icon: <Pill className="w-5 h-5" /> },
+            { name: 'Stock & Batches', href: '/pharmacy/stock', icon: <Package className="w-5 h-5" /> },
+            { name: 'Expiry Alerts', href: '/pharmacy/alerts', icon: <AlertCircle className="w-5 h-5" /> },
             { section: 'Supply Chain' },
-            { name: 'Suppliers & Vendors', href: '/pharmacy/suppliers', icon: '🚚' },
-            { name: 'Purchase Orders', href: '/pharmacy/orders', icon: '📄' },
+            { name: 'Suppliers & Vendors', href: '/pharmacy/suppliers', icon: <Truck className="w-5 h-5" /> },
+            { name: 'Purchase Orders', href: '/pharmacy/orders', icon: <FileText className="w-5 h-5" /> },
         ],
         supermart: [
             { section: 'Retail Operations' },
-            { name: 'Retail Dashboard', href: '/supermart/dashboard', icon: '📊' },
-            { name: 'Point of Sale (POS)', href: '/supermart/pos', icon: '💳' },
-            { name: 'Orders & Deliveries', href: '/supermart/orders', icon: '🚚' },
+            { name: 'Retail Dashboard', href: '/supermart/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+            { name: 'Point of Sale (POS)', href: '/supermart/pos', icon: <CreditCard className="w-5 h-5" /> },
+            // { name: 'Orders & Deliveries', href: '/supermart/orders', icon: <Truck className="w-5 h-5" /> },
             { section: 'Inventory & Stock' },
-            { name: 'Products Catalog', href: '/supermart/catalog', icon: '🥫' },
-            { name: 'Categories & Brands', href: '/supermart/categories', icon: '🏷️' },
-            { name: 'Stock Adjustments', href: '/supermart/stock', icon: '秤' },
+            { name: 'Products Catalog', href: '/supermart/catalog', icon: <Package className="w-5 h-5" /> },
+            { name: 'Categories & Brands', href: '/supermart/categories', icon: <Layout className="w-5 h-5" /> },
+            { name: 'Stock Adjustments', href: '/supermart/stock', icon: <Settings className="w-5 h-5" /> },
             { section: 'Supply Chain' },
-            { name: 'Suppliers Procurement', href: '/supermart/suppliers', icon: '🤝' },
-            { name: 'Purchase Invoices', href: '/supermart/invoices', icon: '🧾' },
-            { name: 'Sales Reports', href: '/supermart/reports', icon: '📈' },
+            { name: 'Suppliers Procurement', href: '/supermart/suppliers', icon: <Handshake className="w-5 h-5" /> },
+            { name: 'Purchase Invoices', href: '/supermart/invoices', icon: <FileText className="w-5 h-5" /> },
+            { name: 'Sales Reports', href: '/supermart/reports', icon: <Layout className="w-5 h-5" /> },
         ],
         clinic: [
             { section: 'Clinical Operations' },
-            { name: 'Clinic Dashboard', href: '/dashboard', icon: '📊' },
-            { name: 'Patient Records', href: '#', icon: '🏥' },
-            { name: 'Appointments', href: '#', icon: '🗓️' },
-            { name: 'Consultations', href: '#', icon: '🩺' },
+            { name: 'Clinic Dashboard', href: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+            { name: 'Patient Records', href: '#', icon: <Users className="w-5 h-5" /> },
+            { name: 'Appointments', href: '#', icon: <Calendar className="w-5 h-5" /> },
+            { name: 'Consultations', href: '#', icon: <UserCheck className="w-5 h-5" /> },
             { section: 'Laboratory' },
-            { name: 'Lab Tests & Results', href: '#', icon: '🔬' },
-            { name: 'Medical Reports', href: '#', icon: '📄' },
+            { name: 'Lab Tests & Results', href: '#', icon: <Pill className="w-5 h-5" /> },
+            { name: 'Medical Reports', href: '#', icon: <FileText className="w-5 h-5" /> },
             { section: 'Billing' },
-            { name: 'Invoicing', href: '#', icon: '💳' },
+            { name: 'Invoicing', href: '#', icon: <CreditCard className="w-5 h-5" /> },
         ]
     };
 
@@ -130,7 +138,7 @@ export default function AuthenticatedLayout({ children }) {
     return (
         <div className="flex h-screen bg-gray-50 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-hidden">
             {/* Sidebar */}
-            <aside className={`bg-gray-950 text-white flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-72' : 'w-20'}`}>
+            <aside className={`glass-sidebar text-white flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-72' : 'w-20'}`}>
                 {/* Brand Header */}
                 <div className="h-20 flex items-center justify-between px-4 border-b border-gray-800">
                     <div className={`flex items-center gap-3 overflow-hidden ${!sidebarOpen && 'justify-center w-full'}`}>
@@ -145,7 +153,7 @@ export default function AuthenticatedLayout({ children }) {
                     </div>
                     {sidebarOpen && (
                         <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-white p-1">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
                     )}
                 </div>
@@ -168,7 +176,7 @@ export default function AuthenticatedLayout({ children }) {
                                 }}
                             >
                                 {availableModules.map(mod => (
-                                    <option key={mod.id} value={mod.id}>{mod.icon} {mod.name}</option>
+                                    <option key={mod.id} value={mod.id}>{mod.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -205,7 +213,7 @@ export default function AuthenticatedLayout({ children }) {
                                 }`}
                                 title={!sidebarOpen ? item.name : undefined}
                             >
-                                <span className="text-xl shrink-0">{item.icon}</span>
+                                <span className="shrink-0">{item.icon}</span>
                                 {sidebarOpen && <span className="text-sm cursor-pointer">{item.name}</span>}
                             </Link>
                         );
@@ -226,7 +234,7 @@ export default function AuthenticatedLayout({ children }) {
                         )}
                         {sidebarOpen && (
                             <Link href="/logout" method="post" as="button" className="text-gray-500 hover:text-white p-2 text-sm bg-white/5 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                <LogOut className="w-4 h-4" />
                             </Link>
                         )}
                     </div>
@@ -236,21 +244,21 @@ export default function AuthenticatedLayout({ children }) {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
                 {/* Top Header Row (Mobile Toggle + Search/Actions) */}
-                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 shrink-0 z-10 sticky top-0">
+                <header className="h-20 glass-header flex items-center justify-between px-6 shrink-0 z-10 sticky top-0">
                     <div className="flex items-center gap-4">
                         {!sidebarOpen && (
                             <button onClick={() => setSidebarOpen(true)} className="text-gray-500 hover:text-gray-900 p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                                <Menu className="w-5 h-5" />
                             </button>
                         )}
                         <div className="hidden md:flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 w-64 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
-                            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <Search className="w-4 h-4 text-gray-400 mr-2" />
                             <input type="text" placeholder="Search everywhere..." className="bg-transparent border-none outline-none text-sm w-full placeholder-gray-400 text-gray-900" />
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <button className="relative p-2 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <Bell className="w-5 h-5" />
                             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
                         <div className="h-8 w-px bg-gray-200"></div>
@@ -262,9 +270,9 @@ export default function AuthenticatedLayout({ children }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-y-auto">
+                <PageTransition url={url}>
                     {children}
-                </div>
+                </PageTransition>
             </main>
         </div>
     );

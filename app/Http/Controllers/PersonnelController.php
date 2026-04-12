@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 
 class PersonnelController extends Controller
@@ -38,19 +39,19 @@ class PersonnelController extends Controller
     public function showStaff(Request $request){
             $staff = User::all()->makeHidden(['updated_at']);
             $staffdata=[];
-            foreach ($staff as $staff){
+            foreach ($staff as $s){
                 $staffdata[]=[
-                'id'=>$staff->id,    
-                'staffid' => $staff->staffid,
-                'name' => $staff->name,
-                'phone' => $staff->phone,
-                'designation' => $staff->designation,
-                'role' => $staff->role,
-                'dob' => $staff->dob,
-                'salary' => $staff->salary,
+                'id'=>$s->id,    
+                'staffid' => $s->staffid,
+                'name' => $s->name,
+                'phone' => $s->phone,
+                'designation' => $s->designation,
+                'role' => $s->role,
+                'dob' => $s->dob,
+                'salary' => $s->salary,
                 ];
             }
-        return view('user.staff.staff', ['staff' => $staffdata]);
+        return Inertia::render('Global/Staff', ['staff' => $staffdata]);
 
     }
 

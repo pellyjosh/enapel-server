@@ -6,7 +6,7 @@ export default function Reports({ stats = {} }) {
     const { total_stock_value = 0, low_stock_items = 0, out_of_stock_items = 0, sales_velocity = 0, fast_moving_percent = 0, slow_moving_percent = 0 } = stats;
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Supermart Reports" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

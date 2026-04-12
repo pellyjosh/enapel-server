@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -50,7 +51,7 @@ export default function Alerts({ lowStock = [], expiring = [] }) {
 
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Pharmacy Alerts" />
 
             <div>
@@ -83,7 +84,13 @@ export default function Alerts({ lowStock = [], expiring = [] }) {
                                 </button>
                             </div>
                         ))}
-                        {expiring.length === 0 && <p className="text-center text-gray-400 font-medium py-10 italic">No items expiring soon.</p>}
+                        {expiring.length === 0 && (
+                            <TablePlaceholder 
+                                title="No expiring items"
+                                description="Great! There are no medications expiring within the next 30 days."
+                                icon="🛡️"
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -111,7 +118,13 @@ export default function Alerts({ lowStock = [], expiring = [] }) {
                                 </button>
                             </div>
                         ))}
-                        {lowStock.length === 0 && <p className="text-center text-gray-400 font-medium py-10 italic">All stock levels are optimal.</p>}
+                        {lowStock.length === 0 && (
+                            <TablePlaceholder 
+                                title="Stock is optimal"
+                                description="Excellent! All your medication stock levels are currently above the threshold."
+                                icon="✅"
+                            />
+                        )}
                     </div>
                 </div>
             </div>

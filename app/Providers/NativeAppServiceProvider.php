@@ -38,8 +38,9 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             ->title('Enapel Server')
             ->width(1280)
             ->height(800)
+            ->backgroundColor('#f9fafb')
             ->rememberState()
-            ->showDevTools(false);
+            ->showDevTools(true);
     }
 
     /**

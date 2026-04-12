@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 export default function Register(props) {
     const { branding, flash } = usePage().props;
@@ -200,12 +200,12 @@ export default function Register(props) {
                                         <p className="text-blue-300/80 text-sm">
                                             An account for <span className="text-white">{licenseData.activated_email}</span> already exists on this server.
                                         </p>
-                                        <a 
+                                        <Link 
                                             href="/login" 
-                                            className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl transition-all"
+                                            className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl transition-all text-center"
                                         >
                                             Sign In to Your Account
-                                        </a>
+                                        </Link>
                                         <button 
                                             onClick={() => { setLicenseData(null); setData('license_key', ''); }}
                                             className="text-xs text-blue-400 hover:text-white underline"
@@ -216,7 +216,7 @@ export default function Register(props) {
                                 )}
 
                                 <div className="mt-6 pt-6 border-t border-gray-800 text-center">
-                                    <p className="text-gray-600 text-sm">Already activated? <a href="/login" className="text-blue-400 hover:text-blue-300 font-semibold">Sign in</a></p>
+                                    <p className="text-gray-600 text-sm">Already activated? <Link href="/login" className="text-blue-400 hover:text-blue-300 font-semibold">Sign in</Link></p>
                                 </div>
                             </>
                         ) : (

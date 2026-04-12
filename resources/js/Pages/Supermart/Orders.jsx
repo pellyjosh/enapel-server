@@ -1,12 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Pagination';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 import { Head } from '@inertiajs/react';
 
 
 export default function Orders({ orders = { data: [], links: [] } }) {
     const ordersData = orders.data || [];
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Supermart Procurement" />
 
             <div>
@@ -27,35 +28,18 @@ export default function Orders({ orders = { data: [], links: [] } }) {
                                 <th className="p-6">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {ordersData.map(o => (
-                                <tr key={o.id} className="hover:bg-blue-50 transition-colors">
-                                    <td className="p-6 font-mono text-xs font-black text-blue-600">PO-{o.id}</td>
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm font-bold text-gray-900">{o.inventory?.name || 'Retail Item'}</p>
-                                            {o.inventory?.sku && (
-                                                <span className="text-[8px] bg-gray-900 text-white px-1 py-0.5 rounded font-mono uppercase shrink-0">
-                                                    {o.inventory.sku}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-6 text-sm font-medium text-gray-400">{o.supplier?.supplier_name || 'Vendor'}</td>
-                                    <td className="p-6 font-black text-gray-900">{o.quantity}</td>
-                                    <td className="p-6 font-black text-blue-900">₦{Number(o.total_price).toLocaleString()}</td>
-                                    <td className="p-6">
-                                        <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Fulfilled</span>
-                                    </td>
-                                </tr>
-                            ))}
-                            {ordersData.length === 0 && (
-                                <tr>
-                                    <td colSpan="6" className="p-20 text-center text-gray-400 font-medium italic">No retail procurement history.</td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+
+                    {ordersData.length === 0 && (
+                        <TablePlaceholder 
+                            title="No procurement history"
+                            description="You haven't made any retail purchase orders yet. Restock your inventory to see history here."
+                            icon="📜"
+                        />
+                    )}
+                </div>
+            </div>
                 </div>
             </div>
 

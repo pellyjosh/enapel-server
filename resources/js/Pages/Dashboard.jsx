@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import RevenueChart from '@/Components/Widgets/RevenueChart';
 import HotelStats from '@/Components/Widgets/HotelStats';
 import CommerceStats from '@/Components/Widgets/CommerceStats';
@@ -37,7 +37,7 @@ export default function Dashboard() {
             <Head title={`${currentModule.charAt(0).toUpperCase() + currentModule.slice(1)} Dashboard`} />
 
             <div className="py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
+                <div className="">
                     {renderDashboard()}
                 </div>
             </div>
@@ -76,9 +76,9 @@ function GlobalDashboard({ metrics, auth, branding, enabledModules }) {
                         <div className="relative z-10">
                             <p className="text-blue-100 text-xs font-bold uppercase tracking-widest">Total Staff</p>
                             <h2 className="text-5xl font-black mt-2">{metrics.overview.total_staff}</h2>
-                            <button className="mt-6 bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-md">
+                            <Link href={route('staff')} className="mt-6 bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-md inline-block">
                                 Manage Team
-                            </button>
+                            </Link>
                         </div>
                     </div>
                     
@@ -95,9 +95,9 @@ function GlobalDashboard({ metrics, auth, branding, enabledModules }) {
                     <h2 className="text-3xl font-black text-white mb-4">Enterprise Resource Planning</h2>
                     <p className="text-blue-200 max-w-xl mx-auto mb-8 font-medium">Your Enapel license grants you access to premium modules. Use the sidebar module switcher to explore your terminal settings.</p>
                     <div className="flex flex-wrap justify-center gap-4">
-                        <button className="bg-white text-gray-900 px-10 py-4 rounded-2xl font-black hover:scale-105 transition-transform shadow-xl">
+                        <Link href={route('global.settings.terminals')} className="bg-white text-gray-900 px-10 py-4 rounded-2xl font-black hover:scale-105 transition-transform shadow-xl inline-block">
                             Module Settings
-                        </button>
+                        </Link>
                         <button className="bg-blue-500/20 text-blue-100 border border-blue-400/30 px-10 py-4 rounded-2xl font-black backdrop-blur-md hover:bg-blue-500/30 transition-colors">
                             Generate Reports
                         </button>
@@ -121,14 +121,14 @@ function HotelDashboard({ metrics }) {
                <div className="bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
                    <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
                    <div className="grid grid-cols-2 gap-4">
-                       <button className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left transition-colors">
+                       <Link href={route('hotel.bookings')} className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left transition-colors block">
                            <span className="text-2xl mb-2 block">📅</span>
                            <span className="font-bold text-sm">New Booking</span>
-                       </button>
-                       <button className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left transition-colors">
+                       </Link>
+                       <Link href={route('hotel.bookings')} className="p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left transition-colors block">
                            <span className="text-2xl mb-2 block">🔑</span>
                            <span className="font-bold text-sm">Check In Guest</span>
-                       </button>
+                       </Link>
                    </div>
                </div>
             </div>
@@ -146,7 +146,7 @@ function CommerceDashboard({ metrics, moduleName }) {
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">{title}</h1>
                 <p className="text-gray-500 font-medium mt-1">{desc}</p>
             </div>
-            <CommerceStats metrics={metrics} />
+            <CommerceStats metrics={metrics} moduleName={moduleName} />
         </div>
     );
 }

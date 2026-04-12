@@ -22,6 +22,11 @@ class PreventRegularBrowserAccess
             return $next($request);
         }
 
+        // Allow access to public storage assets and other public files
+        if ($request->is('storage/*', 'build/*', 'assets/*', 'wizard/*', 'favicon.ico')) {
+            return $next($request);
+        }
+
         $cookie = $request->cookie('_php_native');
         $header = $request->header('X-NativePHP-Secret');
 

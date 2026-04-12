@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import TablePlaceholder from '@/Components/TablePlaceholder';
 
 import { Head, useForm, router } from '@inertiajs/react';
 import { format, isPast, isBefore, addDays } from 'date-fns';
@@ -98,7 +99,7 @@ export default function DrugCatalog({ drugs = [] }) {
 
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="py-8 px-4 sm:px-6 lg:px-8  space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <Head title="Drug Catalog & Inventory" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -230,10 +231,17 @@ export default function DrugCatalog({ drugs = [] }) {
                         </tbody>
                     </table>
 
+                        </tbody>
+                    </table>
+
                     {filteredDrugs.length === 0 && (
-                        <div className="p-12 text-center text-gray-500 font-medium">
-                            No drugs found matching your criteria.
-                        </div>
+                        <TablePlaceholder 
+                            title={searchTerm ? "No drugs found" : "Catalog is empty"}
+                            description={searchTerm 
+                                ? `We couldn't find any medications matching "${searchTerm}". Try a different search term.` 
+                                : "Your drug catalog is currently empty. Add your first medication to start tracking inventory."}
+                            icon="💊"
+                        />
                     )}
                 </div>
             </div>
