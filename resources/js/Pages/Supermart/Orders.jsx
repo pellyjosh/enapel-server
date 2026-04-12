@@ -28,6 +28,23 @@ export default function Orders({ orders = { data: [], links: [] } }) {
                                 <th className="p-6">Status</th>
                             </tr>
                         </thead>
+                        <tbody>
+                            {ordersData.map((order) => (
+                                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                    <td className="p-6 font-mono text-xs font-bold text-gray-400">{order.order_number}</td>
+                                    <td className="p-6 font-bold text-gray-900">{order.product_name}</td>
+                                    <td className="p-6 text-gray-600">{order.supplier_name}</td>
+                                    <td className="p-6 font-bold">{order.quantity}</td>
+                                    <td className="p-6 font-black">₦{Number(order.cost).toLocaleString()}</td>
+                                    <td className="p-6">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                            order.status === 'received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                        }`}>
+                                            {order.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
 
@@ -38,8 +55,6 @@ export default function Orders({ orders = { data: [], links: [] } }) {
                             icon="📜"
                         />
                     )}
-                </div>
-            </div>
                 </div>
             </div>
 

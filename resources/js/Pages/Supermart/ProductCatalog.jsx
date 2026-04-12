@@ -444,9 +444,6 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             </div>
                         </div>
 
-                                </div>
-                            </div>
-                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
                             <div>
@@ -611,9 +608,6 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             </div>
                         </div>
 
-                                </div>
-                            </div>
-                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
                             <div>
@@ -675,7 +669,6 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             </div>
                         </div>
                         </div>
-
                         <button
                             type="submit"
                             disabled={editProcessing}

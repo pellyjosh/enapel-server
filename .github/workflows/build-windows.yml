@@ -17,6 +17,7 @@ jobs:
       NATIVEPHP_SERVER_PORT: "8000"
       NATIVEPHP_WINDOWS_TARGETS: "portable"
       NATIVEPHP_UPDATER_ENABLED: "false"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - uses: actions/checkout@v4

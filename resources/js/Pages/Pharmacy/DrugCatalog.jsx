@@ -231,9 +231,6 @@ export default function DrugCatalog({ drugs = [] }) {
                         </tbody>
                     </table>
 
-                        </tbody>
-                    </table>
-
                     {filteredDrugs.length === 0 && (
                         <TablePlaceholder 
                             title={searchTerm ? "No drugs found" : "Catalog is empty"}
