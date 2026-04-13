@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Increase composer timeout for downloading large binaries
+export COMPOSER_PROCESS_TIMEOUT=2000
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$ROOT_DIR/.env"
 ENV_EXAMPLE="$ROOT_DIR/.env.example"

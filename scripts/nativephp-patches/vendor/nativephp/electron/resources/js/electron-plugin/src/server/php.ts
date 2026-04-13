@@ -468,7 +468,7 @@ function serveApp(secret, apiPort, phpIniSettings): Promise<ProcessResult> {
 
         if (runningSecureBuild()) {
             const bundlePath = join(appPath, 'resources', 'app');
-            serverPath = join(bundlePath, 'public', 'index.php');
+            serverPath = join(bundlePath, 'server.php');
             cwd = bundlePath;
         } else {
             console.log('* * * Running from source * * *');

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Kill the Enapel Server app and its PHP background processes
+# before starting the installation to prevent file-in-use errors.
+
+APP_NAME="Enapel Server"
+
+echo "Checking for running instances of $APP_NAME..."
+
+# 1. Gracefully tell the main app to quit (if possible)
+osascript -e "quit app \"$APP_NAME\"" 2>/dev/null || true
+
+# 2. Force kill any remaining processes if they didn't quit
+pkill -9 "$APP_NAME" || true
+pkill -9 -f "$APP_NAME Helper" || true
+
+# 3. Specifically kill any orphaned PHP server processes
+pkill -9 -f "app/public/index.php" || true
+pkill -9 -f "app/server.php" || true
+
+echo "Cleanup complete. Proceeding with installation."
+
+exit 0
