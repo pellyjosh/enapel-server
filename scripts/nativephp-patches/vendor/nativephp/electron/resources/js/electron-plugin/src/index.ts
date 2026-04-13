@@ -37,6 +37,10 @@ class NativePHP {
 
     initialize();
 
+    if (!phpBinary || phpBinary === 'undefined') {
+        throw new Error('PHP binary path could not be resolved. Please check your application paths.');
+    }
+
     state.icon = icon;
     state.php = phpBinary;
     state.caCert = cert;
