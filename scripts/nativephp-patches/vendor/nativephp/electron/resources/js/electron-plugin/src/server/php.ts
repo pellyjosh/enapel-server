@@ -46,7 +46,7 @@ const argumentEnv = getArgumentEnv();
 const appPath = getAppPath();
 
 function runningSecureBuild() {
-    return existsSync(join(appPath, 'build', '__nativephp_app_bundle'))
+    return existsSync(join(appPath, 'resources', 'app'))
         && process.env.NODE_ENV !== 'development';
 }
 
@@ -110,7 +110,8 @@ async function getPhpPort(host: string) {
             return fixedPort;
         }
 
-        throw new Error(`Port ${fixedPort} is not available on ${host}`);
+        // Port is taken — fall back to dynamic search instead of crashing
+        console.warn(`Preferred port ${fixedPort} is not available on ${host}, searching for a free port...`);
     }
 
     // Try get-port first (fast path)
@@ -152,17 +153,14 @@ function canBindToPort(port: number, host: string): Promise<boolean> {
 
 async function retrievePhpIniSettings() {
     const env = getDefaultEnvironmentVariables() as any;
+    const bundlePath = runningSecureBuild() ? join(appPath, 'resources', 'app') : appPath;
 
     const phpOptions = {
-        cwd: appPath,
+        cwd: bundlePath,
         env
     };
 
-    let command = ['artisan', 'native:php-ini'];
-
-    if (runningSecureBuild()) {
-        command.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
-    }
+    const command = ['artisan', 'native:php-ini'];
 
     if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
         throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
@@ -173,17 +171,14 @@ async function retrievePhpIniSettings() {
 
 async function retrieveNativePHPConfig() {
     const env = getDefaultEnvironmentVariables() as any;
+    const bundlePath = runningSecureBuild() ? join(appPath, 'resources', 'app') : appPath;
 
     const phpOptions = {
-        cwd: appPath,
+        cwd: bundlePath,
         env
     };
 
-    let command = ['artisan', 'native:config'];
-
-    if (runningSecureBuild()) {
-        command.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
-    }
+    const command = ['artisan', 'native:config'];
 
     if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
         throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
@@ -193,10 +188,11 @@ async function retrieveNativePHPConfig() {
 }
 
 function callPhp(args, options, phpIniSettings = {}) {
-
-    if (args[0] === 'artisan' && runningSecureBuild()) {
-        args.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
-    }
+    // For artisan commands, ensure cwd is the Laravel bundle directory
+    const isArtisan = args[0] === 'artisan';
+    const resolvedCwd = (isArtisan && runningSecureBuild())
+        ? join(appPath, 'resources', 'app')
+        : (options.cwd || appPath);
 
     let iniSettings = Object.assign(getDefaultPhpIniSettings(), phpIniSettings);
 
@@ -216,7 +212,7 @@ function callPhp(args, options, phpIniSettings = {}) {
         state.php,
         args,
         {
-            cwd: options.cwd,
+            cwd: resolvedCwd,
             env: {
                 ...process.env,
                 ...options.env
@@ -226,10 +222,11 @@ function callPhp(args, options, phpIniSettings = {}) {
 }
 
 function callPhpSync(args, options, phpIniSettings = {}) {
-
-    if (args[0] === 'artisan' && runningSecureBuild()) {
-        args.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
-    }
+    // For artisan commands, ensure cwd is the Laravel bundle directory
+    const isArtisan = args[0] === 'artisan';
+    const resolvedCwd = (isArtisan && runningSecureBuild())
+        ? join(appPath, 'resources', 'app')
+        : (options.cwd || appPath);
 
     let iniSettings = Object.assign(getDefaultPhpIniSettings(), phpIniSettings);
 
@@ -249,7 +246,7 @@ function callPhpSync(args, options, phpIniSettings = {}) {
         state.php,
         args,
         {
-            cwd: options.cwd,
+            cwd: resolvedCwd,
             env: {
                 ...process.env,
                 ...options.env
@@ -285,23 +282,22 @@ function getAppPath() {
 function ensureAppFoldersAreAvailable() {
     ensureFoldersExist();
     const paths = getResolvedPaths();
+    const sourcePath = runningSecureBuild() ? join(appPath, 'resources', 'app') : appPath;
 
-    // if (!runningSecureBuild()) {
     console.log('Copying storage folder...');
     console.log('Storage path:', paths.storagePath);
-        if (!existsSync(paths.storagePath) || process.env.NODE_ENV === 'development') {
-            console.log("App path:", appPath);
-            copySync(join(appPath, 'storage'), paths.storagePath)
-        }
-    // }
+    if (!existsSync(paths.storagePath) || process.env.NODE_ENV === 'development') {
+        console.log('App path:', sourcePath);
+        copySync(join(sourcePath, 'storage'), paths.storagePath);
+    }
 
-    mkdirSync(paths.databasePath, {recursive: true})
+    mkdirSync(paths.databasePath, {recursive: true});
 
     // Create a database file if it doesn't exist
     try {
-        statSync(paths.databaseFile)
+        statSync(paths.databaseFile);
     } catch (error) {
-        writeFileSync(paths.databaseFile, '')
+        writeFileSync(paths.databaseFile, '');
     }
 }
 
@@ -309,7 +305,7 @@ function startScheduler(secret, apiPort, phpIniSettings = {}) {
     const env = getDefaultEnvironmentVariables(secret, apiPort);
 
     const phpOptions = {
-        cwd: appPath,
+        cwd: runningSecureBuild() ? join(appPath, 'resources', 'app') : appPath,
         env
     };
 
@@ -471,14 +467,16 @@ function serveApp(secret, apiPort, phpIniSettings): Promise<ProcessResult> {
         let cwd: string;
 
         if (runningSecureBuild()) {
-            serverPath = join(appPath, 'build', '__nativephp_app_bundle');
+            const bundlePath = join(appPath, 'resources', 'app');
+            serverPath = join(bundlePath, 'public', 'index.php');
+            cwd = bundlePath;
         } else {
             console.log('* * * Running from source * * *');
             serverPath = join(appPath, 'vendor', 'laravel', 'framework', 'src', 'Illuminate', 'Foundation', 'resources', 'server.php');
             cwd = join(appPath, 'public');
         }
 
-        console.log('Starting PHP server...');
+        console.log('Starting PHP server...', state.php, 'artisan serve', cwd);
         const phpServer = callPhp(['-S', `${serverHost}:${phpPort}`, serverPath], {
             cwd: cwd,
             env

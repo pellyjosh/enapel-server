@@ -151,18 +151,21 @@ php "$ROOT_DIR/scripts/patch-nativephp.php"
 echo "==> Building macOS DMG (${ARCH})"
 php "$ROOT_DIR/artisan" native:build mac "$ARCH" --no-interaction
 
-echo "==> Finalizing: Keeping only the standalone DMG"
+echo "==> Finalizing: Keeping DMG and PKG installers"
 if [[ -d "$DIST_DIR" ]]; then
-  # Find all files that are NOT the final .dmg and remove them
-  # We use the arch-specific DMG name produced by electron-builder
-  find "$DIST_DIR" -maxdepth 1 -type f ! -name "*.dmg" -delete
+  # Remove intermediate build artifacts but keep dmg and pkg installers
+  find "$DIST_DIR" -maxdepth 1 -type f ! -name "*.dmg" ! -name "*.pkg" -delete
   find "$DIST_DIR" -maxdepth 1 -type d -name "*.app" -exec rm -rf {} +
 fi
 
 echo
-echo "DMG build complete. Standalone DMG is available in:"
+echo "Build complete. Installers are available in:"
 echo "  $DIST_DIR"
+echo
+echo "  *.dmg  → Open, drag app to Applications (standard)"
+echo "  *.pkg  → Double-click to install automatically (no dragging needed)"
+echo
 
 if [[ -d "$DIST_DIR" ]]; then
-  find "$DIST_DIR" -maxdepth 1 \( -name '*.dmg' -o -name '*.app' -o -name '*.zip' \) -print | sed 's/^/  - /'
+  find "$DIST_DIR" -maxdepth 1 \( -name '*.dmg' -o -name '*.pkg' \) -print | sort | sed 's/^/  - /'
 fi

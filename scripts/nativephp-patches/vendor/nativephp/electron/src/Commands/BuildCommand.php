@@ -189,20 +189,30 @@ class BuildCommand extends Command
         // otherwise it misses the file-copy phase into the staging directory.
         $osParts = explode('-', $this->buildOS);
         $targetOs = $osParts[0] ?? '';
-        $arch = $osParts[1] ?? 'x64';
+        $arch = $osParts[1] ?? 'all';
+
+        $commandsToRun = [];
 
         if ($targetOs === 'win') {
-            $archArgs = "--win --{$arch}";
+            $commandsToRun[] = "--win --" . ($arch === 'all' ? 'x64' : $arch);
         } elseif ($targetOs === 'mac') {
-            $archArgs = "--mac --{$arch}";
+            if ($arch === 'all') {
+                $commandsToRun[] = "--mac --x64";
+                $commandsToRun[] = "--mac --arm64";
+            } else {
+                $commandsToRun[] = "--mac --{$arch}";
+            }
         } elseif ($targetOs === 'linux') {
-            $archArgs = "--linux --{$arch}";
-        } else {
-            $archArgs = ''; 
+            if ($arch === 'all') {
+                $commandsToRun[] = "--linux --x64";
+                $commandsToRun[] = "--linux --arm64";
+            } else {
+                $commandsToRun[] = "--linux --{$arch}";
+            }
         }
 
-        if (!empty($archArgs)) {
-            intro("Extracting PHP binary for {$targetOs} ({$arch})...");
+        foreach ($commandsToRun as $archArgs) {
+            intro("Extracting PHP binary with args: {$archArgs}...");
             Process::path(__DIR__.'/../../resources/js/')
                 ->env($this->getEnvironmentVariables())
                 ->forever()

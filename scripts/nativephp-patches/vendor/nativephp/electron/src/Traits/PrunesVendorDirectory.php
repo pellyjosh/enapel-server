@@ -21,6 +21,14 @@ trait PrunesVendorDirectory
                 echo $output;
             });
 
+        // Regenerate the autoloader after removing dev packages so ClassLoader
+        // no longer references files that were deleted (e.g. fakerphp, myclabs/deep-copy).
+        Process::path($this->buildPath())
+            ->forever()
+            ->run('composer dump-autoload --optimize --no-dev', function (string $type, string $output) {
+                echo $output;
+            });
+
         $filesystem = new Filesystem;
         $filesystem->remove([
             $this->buildPath('/vendor/bin'),

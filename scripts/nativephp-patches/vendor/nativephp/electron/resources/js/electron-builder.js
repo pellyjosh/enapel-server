@@ -72,24 +72,9 @@ export default {
     ],
     asarUnpack: [
         'resources/**',
+        'database/**',
+        'build/**',
     ],
-    beforePack: async (context) => {
-        const { promisify } = await import('util');
-        const execPromise = promisify(exec);
-
-        let arch = {
-            1: 'x64',
-            3: 'arm64'
-        }[context.arch];
-
-        if(arch === undefined) {
-            console.error('Cannot build PHP for unsupported architecture');
-            process.exit(1);
-        }
-
-        console.log(`  • building php binary - exec php.js --${targetOs} --${arch}`);
-        await execPromise(`node php.js --${targetOs} --${arch}`);
-    },
     afterSign: 'build/notarize.js',
     win: {
         executableName: fileName,
@@ -120,6 +105,10 @@ export default {
         minimumSystemVersion: macosDeploymentTarget,
         entitlementsInherit: 'build/entitlements.mac.plist',
         artifactName: appName + '-${version}-${arch}.${ext}',
+        target: [
+            { target: 'dmg', arch: ['arm64', 'x64'] },
+            { target: 'pkg', arch: ['arm64', 'x64'] },
+        ],
         extendInfo: {
             NSCameraUsageDescription:
                 "Application requests access to the device's camera.",
@@ -130,6 +119,13 @@ export default {
             NSDownloadsFolderUsageDescription:
                 "Application requests access to the user's Downloads folder.",
         },
+    },
+    pkg: {
+        artifactName: appName + '-${version}-${arch}.pkg',
+        allowAnywhere: false,
+        allowCurrentUserHome: false,
+        allowRootDirectory: true,
+        installLocation: '/Applications',
     },
     dmg: {
         artifactName: appName + '-${version}-${arch}.${ext}',

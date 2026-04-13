@@ -426,12 +426,14 @@ class NativePHP {
 
   private showStartupError(error: unknown) {
     const detail = error instanceof Error
-      ? error.message
+      ? error.stack || error.message
       : String(error ?? 'Unknown startup error');
+
+    require('fs').writeFileSync(require('path').join(require('os').homedir(), 'Desktop', 'enapel_error.txt'), detail, 'utf8');
 
     this.showSplashWindow(
       'Unable to start Enapel Server',
-      `${detail}\n\nCheck the application logs in:\n${resolve(app.getPath('userData'), 'storage', 'logs')}`,
+      `${error instanceof Error ? error.message : detail}\n\nCheck the application logs in:\n${resolve(app.getPath('userData'), 'storage', 'logs')}`,
       true,
     );
   }
