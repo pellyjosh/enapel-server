@@ -449,7 +449,8 @@ function serveApp(secret, apiPort, phpIniSettings): Promise<ProcessResult> {
             console.log('Migrating database...');
 
             if(parseInt(process.env.SHELL_VERBOSITY) > 0) {
-                console.log('Database path:', databaseFile);
+                const paths = getResolvedPaths();
+                console.log('Database path:', paths.databaseFile);
             }
 
             let result = callPhpSync(['artisan', 'migrate', '--force'], phpOptions, phpIniSettings);
