@@ -530,7 +530,6 @@ class NativePHP {
                 }
             }
         }
-    }
 
   private startAutoUpdater(config: any) {
     if (config?.updater?.enabled === true) {
