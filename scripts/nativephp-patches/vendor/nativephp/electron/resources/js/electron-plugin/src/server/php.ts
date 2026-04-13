@@ -147,6 +147,10 @@ async function retrievePhpIniSettings() {
         command.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
     }
 
+    if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
+        throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
+    }
+
     return await promisify(execFile)(state.php, command, phpOptions);
 }
 
@@ -162,6 +166,10 @@ async function retrieveNativePHPConfig() {
 
     if (runningSecureBuild()) {
         command.unshift(join(appPath, 'build', '__nativephp_app_bundle'));
+    }
+
+    if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
+        throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
     }
 
     return await promisify(execFile)(state.php, command, phpOptions);
@@ -181,6 +189,10 @@ function callPhp(args, options, phpIniSettings = {}) {
 
     if (parseInt(process.env.SHELL_VERBOSITY) > 0) {
         console.log('Calling PHP', state.php, args);
+    }
+
+    if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
+        throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
     }
 
     return spawn(
@@ -210,6 +222,10 @@ function callPhpSync(args, options, phpIniSettings = {}) {
 
     if (parseInt(process.env.SHELL_VERBOSITY) > 0) {
         console.log('Calling PHP', state.php, args);
+    }
+
+    if (!state.php || typeof state.php !== 'string' || state.php.includes('undefined')) {
+        throw new Error(`Critical Error: PHP binary path is invalid or undefined. Resolved as: "${state.php}". Please reinstall the application.`);
     }
 
     return spawnSync(
