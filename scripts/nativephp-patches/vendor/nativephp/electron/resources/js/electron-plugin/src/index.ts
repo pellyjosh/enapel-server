@@ -471,13 +471,17 @@ class NativePHP {
   }
 
   private setAppUserModelId(config: any) {
-    electronApp.setAppUserModelId(config?.app_id);
+    if (config?.app_id && typeof config.app_id === 'string') {
+        electronApp.setAppUserModelId(config.app_id);
+    } else {
+        console.warn('App ID is missing or invalid in config. Skipping setAppUserModelId.');
+    }
   }
 
   private setDeepLinkHandler(config: any) {
     const deepLinkProtocol = config?.deeplink_scheme;
 
-    if (deepLinkProtocol) {
+    if (deepLinkProtocol && typeof deepLinkProtocol === 'string') {
       if (process.defaultApp) {
         if (process.argv.length >= 2) {
           app.setAsDefaultProtocolClient(deepLinkProtocol, process.execPath, [
@@ -487,6 +491,9 @@ class NativePHP {
       } else {
         app.setAsDefaultProtocolClient(deepLinkProtocol);
       }
+    } else {
+      console.warn('Deep link protocol is missing or invalid in config. Skipping protocol registration.');
+    }
 
             /**
              * Handle protocol url for windows and linux

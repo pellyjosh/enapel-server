@@ -13,20 +13,37 @@ import state from "./state.js";
 import getPort, {portNumbers} from 'get-port';
 import {ProcessResult} from "./ProcessResult.js";
 
-// TODO: maybe in dev, don't go to the userData folder and stay in the Laravel app folder
-const storagePath = join(app.getPath('userData'), 'storage')
-const databasePath = join(app.getPath('userData'), 'database')
-const databaseFile = join(databasePath, 'database.sqlite')
-const bootstrapCache = join(app.getPath('userData'), 'bootstrap', 'cache')
+let _resolvedPaths: any = null;
+
+function getResolvedPaths() {
+    if (_resolvedPaths) return _resolvedPaths;
+
+    const userData = app.getPath('userData');
+    const storagePath = join(userData, 'storage');
+    const databasePath = join(userData, 'database');
+
+    _resolvedPaths = {
+        storagePath,
+        databasePath,
+        databaseFile: join(databasePath, 'database.sqlite'),
+        bootstrapCache: join(userData, 'bootstrap', 'cache'),
+    };
+
+    return _resolvedPaths;
+}
+
+function ensureFoldersExist() {
+    const paths = getResolvedPaths();
+    mkdirpSync(paths.bootstrapCache);
+    mkdirpSync(join(paths.storagePath, 'logs'));
+    mkdirpSync(join(paths.storagePath, 'framework', 'cache'));
+    mkdirpSync(join(paths.storagePath, 'framework', 'sessions'));
+    mkdirpSync(join(paths.storagePath, 'framework', 'views'));
+    mkdirpSync(join(paths.storagePath, 'framework', 'testing'));
+}
+
 const argumentEnv = getArgumentEnv();
 const appPath = getAppPath();
-
-mkdirpSync(bootstrapCache);
-mkdirpSync(join(storagePath, 'logs'));
-mkdirpSync(join(storagePath, 'framework', 'cache'));
-mkdirpSync(join(storagePath, 'framework', 'sessions'));
-mkdirpSync(join(storagePath, 'framework', 'views'));
-mkdirpSync(join(storagePath, 'framework', 'testing'));
 
 function runningSecureBuild() {
     return existsSync(join(appPath, 'build', '__nativephp_app_bundle'))
@@ -266,23 +283,25 @@ function getAppPath() {
 }
 
 function ensureAppFoldersAreAvailable() {
+    ensureFoldersExist();
+    const paths = getResolvedPaths();
 
     // if (!runningSecureBuild()) {
     console.log('Copying storage folder...');
-    console.log('Storage path:', storagePath);
-        if (!existsSync(storagePath) || process.env.NODE_ENV === 'development') {
+    console.log('Storage path:', paths.storagePath);
+        if (!existsSync(paths.storagePath) || process.env.NODE_ENV === 'development') {
             console.log("App path:", appPath);
-            copySync(join(appPath, 'storage'), storagePath)
+            copySync(join(appPath, 'storage'), paths.storagePath)
         }
     // }
 
-    mkdirSync(databasePath, {recursive: true})
+    mkdirSync(paths.databasePath, {recursive: true})
 
     // Create a database file if it doesn't exist
     try {
-        statSync(databaseFile)
+        statSync(paths.databaseFile)
     } catch (error) {
-        writeFileSync(databaseFile, '')
+        writeFileSync(paths.databaseFile, '')
     }
 }
 
@@ -338,14 +357,16 @@ interface EnvironmentVariables {
 }
 
 function getDefaultEnvironmentVariables(secret?: string, apiPort?: number, serverHost?: string, serverPort?: number): EnvironmentVariables {
+    const paths = getResolvedPaths();
+
     // Base variables with string values (no null values)
     let variables: EnvironmentVariables = {
         APP_ENV: process.env.NODE_ENV === 'development' ? 'local' : 'production',
         APP_DEBUG: process.env.NODE_ENV === 'development' ? 'true' : 'false',
-        LARAVEL_STORAGE_PATH: storagePath,
+        LARAVEL_STORAGE_PATH: paths.storagePath,
         NATIVEPHP_RUNNING: 'true',
-        NATIVEPHP_STORAGE_PATH: storagePath,
-        NATIVEPHP_DATABASE_PATH: databaseFile,
+        NATIVEPHP_STORAGE_PATH: paths.storagePath,
+        NATIVEPHP_DATABASE_PATH: paths.databaseFile,
         NATIVEPHP_SERVER_HOST: serverHost,
         NATIVEPHP_SERVER_PORT: serverPort ? String(serverPort) : undefined,
         NATIVEPHP_USER_HOME_PATH: getPath('home'),
@@ -368,11 +389,11 @@ function getDefaultEnvironmentVariables(secret?: string, apiPort?: number, serve
 
     // Only add cache paths if in production mode
     if (runningSecureBuild()) {
-        variables.APP_SERVICES_CACHE = join(bootstrapCache, 'services.php'); // Should be present and writable
-        variables.APP_PACKAGES_CACHE = join(bootstrapCache, 'packages.php'); // Should be present and writable
-        variables.APP_CONFIG_CACHE = join(bootstrapCache, 'config.php');
-        variables.APP_ROUTES_CACHE = join(bootstrapCache, 'routes-v7.php');
-        variables.APP_EVENTS_CACHE = join(bootstrapCache, 'events.php');
+        variables.APP_SERVICES_CACHE = join(paths.bootstrapCache, 'services.php'); // Should be present and writable
+        variables.APP_PACKAGES_CACHE = join(paths.bootstrapCache, 'packages.php'); // Should be present and writable
+        variables.APP_CONFIG_CACHE = join(paths.bootstrapCache, 'config.php');
+        variables.APP_ROUTES_CACHE = join(paths.bootstrapCache, 'routes-v7.php');
+        variables.APP_EVENTS_CACHE = join(paths.bootstrapCache, 'events.php');
         // variables.VIEW_COMPILED_PATH; // TODO: keep those in the phar file if we can.
     }
 
@@ -486,7 +507,8 @@ function serveApp(secret, apiPort, phpIniSettings): Promise<ProcessResult> {
                 });
             } else {
                 if (error.includes('[NATIVE_EXCEPTION]:')) {
-                    let logFile = join(storagePath, 'logs');
+                    const paths = getResolvedPaths();
+                    let logFile = join(paths.storagePath, 'logs');
 
                     console.log();
                     console.error('Error in PHP:');
