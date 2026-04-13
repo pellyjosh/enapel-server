@@ -37,37 +37,10 @@ detect_arch() {
   esac
 }
 
-ARCH="${1:-}"
+# Force universal (Intel + Apple Silicon) by default for wider compatibility
+ARCH="${1:-all}"
 
-case "$ARCH" in
-  ""|auto)
-    ARCH="$(detect_arch)"
-    ;;
-  arm64|apple-silicon)
-    ARCH="arm64"
-    ;;
-  x86|x64|x86_64|intel)
-    ARCH="x86"
-    ;;
-  all|universal)
-    ARCH="all"
-    ;;
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  *)
-    echo "Unsupported architecture: $ARCH" >&2
-    usage
-    exit 1
-    ;;
-esac
-
-if [[ -z "$ARCH" ]]; then
-  echo "Could not detect this Mac architecture automatically. Pass arm64, x86, or all." >&2
-  exit 1
-fi
-
+# Targeted for macOS 10.15+ (as supported by Electron 32)
 export MACOSX_DEPLOYMENT_TARGET="10.15"
 
 for cmd in php composer npm; do

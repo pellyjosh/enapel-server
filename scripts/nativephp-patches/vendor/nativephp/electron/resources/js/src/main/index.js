@@ -6,7 +6,9 @@ import certificate from '../../resources/cacert.pem?asset&asarUnpack'
 
 let phpBinary = process.platform === 'win32' ? 'php.exe' : 'php';
 
-phpBinary = path.join(app.getAppPath(), 'resources', 'php', phpBinary).replace("app.asar", "app.asar.unpacked");
+// Detect architecture for macOS universal builds
+const archFolder = (process.platform === 'darwin') ? (process.arch === 'arm64' ? 'arm64' : 'x86' ) : '';
+phpBinary = path.join(app.getAppPath(), 'resources', 'php', archFolder, phpBinary).replace("app.asar", "app.asar.unpacked");
 
 /**
  * Turn on the lights for the NativePHP app.

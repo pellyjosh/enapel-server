@@ -74,6 +74,9 @@ export default {
         'resources/**',
     ],
     beforePack: async (context) => {
+        const { promisify } = await import('util');
+        const execPromise = promisify(exec);
+
         let arch = {
             1: 'x64',
             3: 'arm64'
@@ -85,7 +88,7 @@ export default {
         }
 
         console.log(`  • building php binary - exec php.js --${targetOs} --${arch}`);
-        exec(`node php.js --${targetOs} --${arch}`);
+        await execPromise(`node php.js --${targetOs} --${arch}`);
     },
     afterSign: 'build/notarize.js',
     win: {
