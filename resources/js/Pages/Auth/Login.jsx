@@ -181,11 +181,17 @@ export default function Login() {
                         </p>
 
                         {/* Security badge */}
-                        <div className="mt-8 flex items-center justify-center gap-2 text-gray-600">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            </svg>
-                            <span className="text-xs">Protected by Enapel Cloud License Validation</span>
+                        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-gray-600">
+                            <div className="flex items-center gap-2">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                </svg>
+                                <span className="text-xs">Protected by Enapel Cloud License Validation</span>
+                            </div>
+                            <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-700 bg-gray-900 px-2 py-1 rounded border border-gray-800 flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
+                                Enapel Server running on port {usePage().props.native_port}
+                            </div>
                         </div>
                     </div>
                 </div>

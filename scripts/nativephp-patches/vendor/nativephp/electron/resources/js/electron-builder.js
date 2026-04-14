@@ -75,7 +75,7 @@ export default {
         'database/**',
         'build/**',
     ],
-    ...(process.env.NATIVEPHP_APPLE_ID ? { afterSign: 'build/notarize.js' } : {}),
+    afterSign: 'build/notarize.js',
     win: {
         executableName: fileName,
         ...(windowsTargets.length ? { target: windowsTargets } : {}),
@@ -105,7 +105,10 @@ export default {
         minimumSystemVersion: macosDeploymentTarget,
         entitlementsInherit: 'build/entitlements.mac.plist',
         artifactName: appName + '-${version}-${arch}.${ext}',
-        target: ['dmg', 'pkg'],
+        target: [
+            { target: 'dmg', arch: ['arm64', 'x64'] },
+            { target: 'pkg', arch: ['arm64', 'x64'] },
+        ],
         extendInfo: {
             NSCameraUsageDescription:
                 "Application requests access to the device's camera.",
@@ -123,7 +126,6 @@ export default {
         allowCurrentUserHome: false,
         allowRootDirectory: true,
         installLocation: '/Applications',
-        scripts: 'build/pkg-scripts',
     },
     dmg: {
         artifactName: appName + '-${version}-${arch}.${ext}',

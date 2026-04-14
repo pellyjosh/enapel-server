@@ -117,6 +117,15 @@ class NativePHP {
       await this.startPhpApp();
       await this.waitForServerHttpReady();
 
+      // Record the assigned port to the Desktop for user visibility
+      try {
+        const portFile = require('path').join(require('os').homedir(), 'Desktop', 'enapel_port.txt');
+        require('fs').writeFileSync(portFile, `Enapel Server is running on port: ${state.phpPort}\nURL: http://127.0.0.1:${state.phpPort}\n`, 'utf8');
+        console.log(`Recorded assigned port ${state.phpPort} to ${portFile}`);
+      } catch (e) {
+        console.error("Failed to write port file to Desktop", e);
+      }
+
       this.startScheduler();
 
       powerMonitor.on("suspend", () => {
@@ -433,7 +442,7 @@ class NativePHP {
 
     this.showSplashWindow(
       'Unable to start Enapel Server',
-      `${error instanceof Error ? error.message : detail}\n\nCheck the application logs in:\n${resolve(app.getPath('userData'), 'storage', 'logs')}`,
+      `${error instanceof Error ? error.message : detail}\n\nAssigned Port: ${state.phpPort || 'Unknown'}\n\nCheck the application logs in:\n${resolve(app.getPath('userData'), 'storage', 'logs')}`,
       true,
     );
   }

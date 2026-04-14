@@ -15,6 +15,16 @@ import {ProcessResult} from "./ProcessResult.js";
 
 let _resolvedPaths: any = null;
 
+function sanitizeEnv(env: any) {
+    const sanitized = {};
+    Object.keys(env).forEach(key => {
+        if (env[key] !== undefined && env[key] !== null) {
+            sanitized[key] = String(env[key]);
+        }
+    });
+    return sanitized;
+}
+
 function getResolvedPaths() {
     if (_resolvedPaths) return _resolvedPaths;
 
@@ -48,6 +58,10 @@ const appPath = getAppPath();
 function runningSecureBuild() {
     return existsSync(join(appPath, 'resources', 'app'))
         && process.env.NODE_ENV !== 'development';
+}
+
+function usesBundledPhar() {
+    return runningSecureBuild() && existsSync(join(getAppPath(), 'build', '__nativephp_app_bundle'));
 }
 
 function shouldMigrateDatabase(store) {
@@ -107,11 +121,13 @@ async function getPhpPort(host: string) {
 
     if (fixedPort) {
         if (await canBindToPort(fixedPort, host)) {
+            console.log(`Successfully bound to preferred port: ${fixedPort} on ${host}`);
             return fixedPort;
         }
 
         // Port is taken — fall back to dynamic search instead of crashing
-        console.warn(`Preferred port ${fixedPort} is not available on ${host}, searching for a free port...`);
+        console.warn(`Preferred port ${fixedPort} is not available on ${host}. This usually means another application is already using it.`);
+        console.log(`Searching for an available port in range 8100-9000...`);
     }
 
     // Try get-port first (fast path)
@@ -213,10 +229,10 @@ function callPhp(args, options, phpIniSettings = {}) {
         args,
         {
             cwd: resolvedCwd,
-            env: {
+            env: sanitizeEnv({
                 ...process.env,
                 ...options.env
-            },
+            }),
         }
     );
 }
@@ -247,10 +263,10 @@ function callPhpSync(args, options, phpIniSettings = {}) {
         args,
         {
             cwd: resolvedCwd,
-            env: {
+            env: sanitizeEnv({
                 ...process.env,
                 ...options.env
-            }
+            })
         }
     );
 }
@@ -393,7 +409,7 @@ function getDefaultEnvironmentVariables(secret?: string, apiPort?: number, serve
         // variables.VIEW_COMPILED_PATH; // TODO: keep those in the phar file if we can.
     }
 
-    return variables;
+    return sanitizeEnv(variables) as any;
 }
 
 function getDefaultPhpIniSettings() {
@@ -466,9 +482,14 @@ function serveApp(secret, apiPort, phpIniSettings): Promise<ProcessResult> {
         let serverPath: string;
         let cwd: string;
 
-        if (runningSecureBuild()) {
+        if (usesBundledPhar()) {
             const bundlePath = join(appPath, 'resources', 'app');
-            serverPath = join(bundlePath, 'server.php');
+            serverPath = join(bundlePath, 'router.php');
+            cwd = bundlePath;
+        } else if (runningSecureBuild()) {
+            // Insecure build (exposed source)
+            const bundlePath = join(appPath, 'resources', 'app');
+            serverPath = join(bundlePath, 'router.php');
             cwd = bundlePath;
         } else {
             console.log('* * * Running from source * * *');
@@ -539,5 +560,6 @@ export {
     retrievePhpIniSettings,
     getDefaultEnvironmentVariables,
     getDefaultPhpIniSettings,
-    runningSecureBuild
+    runningSecureBuild,
+    usesBundledPhar
 }

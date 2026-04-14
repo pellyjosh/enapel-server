@@ -116,6 +116,7 @@ class HandleInertiaRequests extends Middleware
                 'license_message' => fn() => $request->session()->get('license_message'),
                 'license_reason'  => fn() => $request->session()->get('license_reason'),
             ],
+            'native_port' => env('NATIVEPHP_SERVER_PORT', 8000),
         ];
     }
 }

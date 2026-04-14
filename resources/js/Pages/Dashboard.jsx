@@ -7,7 +7,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Dashboard() {
     const { url, props } = usePage();
-    const { branding, auth, metrics, enabledModules } = props;
+    const { branding, auth, metrics, enabledModules, native_port } = props;
 
     // Parse URL for module parameter
     const params = new URLSearchParams(url.split('?')[1]);
@@ -54,8 +54,11 @@ function GlobalDashboard({ metrics, auth, branding, enabledModules }) {
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight">
                         Welcome, {auth.user.name.split(' ')[0]}
                     </h1>
-                    <p className="text-gray-500 font-medium mt-1">
-                        Managing <span className="text-blue-600"> {branding.name} </span> Global Operations
+                    <p className="text-gray-500 font-medium mt-1 flex items-center gap-3">
+                        <span>Managing <span className="text-blue-600"> {branding.name} </span> Global Operations</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                            Port {native_port}
+                        </span>
                     </p>
                 </div>
                 <div className="flex items-center gap-3">

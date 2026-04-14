@@ -32,11 +32,23 @@ trait CopiesBundleToBuildDirectory
         $filesToCopy = [
             self::$bundlePath,
             'server.php',
+            'router.php',
             // '.env',
         ];
         foreach ($filesToCopy as $file) {
             $filesystem->copy($this->sourcePath($file), $this->buildPath($file), true);
         }
+
+        // Copy compiled Vite assets
+        $publicBuildPath = $this->sourcePath('public/build');
+        if ($filesystem->exists($publicBuildPath)) {
+            $this->line('Copying compiled frontend assets...');
+            $filesystem->mirror($publicBuildPath, $this->buildPath('public/build'), null, [
+                'override' => true,
+                'delete' => true,
+            ]);
+        }
+
         // $this->keepRequiredDirectories();
 
         return true;

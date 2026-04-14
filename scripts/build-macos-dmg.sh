@@ -103,6 +103,7 @@ $updates = [
     'SESSION_DRIVER' => 'file',
     'CACHE_STORE' => 'file',
     'QUEUE_CONNECTION' => 'sync',
+    'NATIVEPHP_UPDATER_ENABLED' => 'false',
     'NATIVEPHP_ALLOW_LAN' => 'true',
     'NATIVEPHP_SERVER_HOST' => '0.0.0.0',
     'NATIVEPHP_SERVER_PORT' => '8000',
