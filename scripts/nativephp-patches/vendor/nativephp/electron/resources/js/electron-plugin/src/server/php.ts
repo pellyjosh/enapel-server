@@ -125,8 +125,19 @@ async function getPhpPort(host: string) {
             return fixedPort;
         }
 
-        // Port is taken — fall back to dynamic search instead of crashing
-        console.warn(`Preferred port ${fixedPort} is not available on ${host}. This usually means another application is already using it.`);
+        // Port is taken — try to kill the existing process on it
+        console.warn(`Preferred port ${fixedPort} is busy on ${host}. Attempting to force it...`);
+        killProcessOnPort(fixedPort);
+
+        // Small delay to let the port free up
+        await new Promise(r => setTimeout(r, 500));
+
+        if (await canBindToPort(fixedPort, host)) {
+            console.log(`Successfully took over preferred port: ${fixedPort}`);
+            return fixedPort;
+        }
+
+        console.warn(`Could not force port ${fixedPort}, falling back to dynamic search.`);
         console.log(`Searching for an available port in range 8100-9000...`);
     }
 
@@ -165,6 +176,19 @@ function canBindToPort(port: number, host: string): Promise<boolean> {
             resolve(false);
         });
     });
+}
+
+function killProcessOnPort(port: number) {
+    try {
+        console.log(`Attempting to forcefully free port ${port}...`);
+        if (process.platform === 'darwin' || process.platform === 'linux') {
+            spawnSync('sh', ['-c', `lsof -ti:${port} | xargs kill -9`]);
+        } else if (process.platform === 'win32') {
+            spawnSync('cmd', ['/c', `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port}') do taskkill /f /pid %a`]);
+        }
+    } catch (e) {
+        console.error(`Failed to kill process on port ${port}:`, e);
+    }
 }
 
 async function retrievePhpIniSettings() {
@@ -561,5 +585,6 @@ export {
     getDefaultEnvironmentVariables,
     getDefaultPhpIniSettings,
     runningSecureBuild,
-    usesBundledPhar
+    usesBundledPhar,
+    killProcessOnPort
 }

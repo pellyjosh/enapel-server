@@ -12,6 +12,7 @@ import {
   startAPI,
   startPhpApp,
 } from "./server/index.js";
+import { killProcessOnPort } from "./server/php.js";
 import { notifyLaravel } from "./server/utils.js";
 import { resolve } from "path";
 import { stopAllProcesses } from "./server/api/childProcess.js";
@@ -605,6 +606,11 @@ class NativePHP {
   private killChildProcesses() {
     this.stopScheduler();
 
+    // Force kill the PHP server port specifically to ensure it is freed
+    if (state.phpPort) {
+        killProcessOnPort(state.phpPort);
+    }
+
     this.processes
       .filter((p) => p !== undefined)
       .forEach((process) => {
@@ -613,7 +619,7 @@ class NativePHP {
 
         try {
           // @ts-ignore
-          killSync(process.pid, 'SIGTERM', true); // Kill tree
+          killSync(process.pid, 'SIGKILL', true); // Use SIGKILL for more aggressive cleanup
           ps.kill(process.pid); // Sometimes does not kill the subprocess of php server
 
         } catch (err) {
