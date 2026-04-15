@@ -78,6 +78,17 @@ jobs:
           php artisan cache:clear --ansi
           npm run build
 
+      - name: Flatten Storage Symlinks
+        shell: pwsh
+        run: |
+          # Physically copy storage assets to public/storage for the bundle
+          if (Test-Path 'public/storage') {
+            Remove-Item 'public/storage' -Force -Recurse
+          }
+          if (Test-Path 'storage/app/public') {
+            Copy-Item 'storage/app/public' 'public/storage' -Recurse -Force
+          }
+
       # Patches are applied AFTER npm ci so that the electron-plugin TypeScript
       # sources exist in vendor/nativephp/electron/resources/js/electron-plugin/src/
       # before the patch script writes to them.

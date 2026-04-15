@@ -28,7 +28,7 @@ export default function Dashboard() {
                 return <CommerceDashboard metrics={metrics.commerce} moduleName={currentModule} />;
             case 'global':
             default:
-                return <GlobalDashboard metrics={metrics} auth={auth} branding={branding} enabledModules={enabledModules} />;
+                return <GlobalDashboard metrics={metrics} auth={auth} branding={branding} enabledModules={enabledModules} native_port={native_port} />;
         }
     };
 
@@ -45,7 +45,7 @@ export default function Dashboard() {
     );
 }
 
-function GlobalDashboard({ metrics, auth, branding, enabledModules }) {
+function GlobalDashboard({ metrics, auth, branding, enabledModules, native_port }) {
     return (
         <div className="space-y-8">
             {/* Header Section */}
