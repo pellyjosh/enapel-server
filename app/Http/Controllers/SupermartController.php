@@ -60,7 +60,7 @@ class SupermartController extends Controller
         return Inertia::render('Supermart/ProductCatalog', [
             'products' => $products,
             'categories' => $categories,
-            'all_products' => Inventory::all(['id', 'name']) // For selecting parents
+            'all_products' => Inventory::whereNull('parent_id')->get(['id', 'name', 'category', 'description', 'price', 'cost_price', 'unit_name', 'units_per_pack', 'packs_per_carton', 'pack_price_override', 'carton_price_override']) 
         ]);
     }
 
@@ -132,7 +132,22 @@ class SupermartController extends Controller
         return Inertia::render('Supermart/Stock', [
             'inventory' => $inventory,
             'allProducts' => $allProducts,
-            'suppliers' => $suppliers
+            'suppliers' => $suppliers,
+        ]);
+    }
+
+    public function stockHistory($id)
+    {
+        $product = Inventory::findOrFail($id);
+        
+        $adjustments = \App\Models\Api\Purchase::with(['supplier', 'inventory'])
+            ->where('inventory_id', $id)
+            ->latest()
+            ->paginate(15);
+
+        return Inertia::render('Supermart/StockHistory', [
+            'product' => $product,
+            'adjustments' => $adjustments
         ]);
     }
 
@@ -236,7 +251,6 @@ class SupermartController extends Controller
             'sku' => ['nullable', 'string', 'max:255', Rule::unique('inventories', 'sku')->ignore($id)],
             'category' => ['nullable', 'string', 'max:255', 'not_regex:/drug/i'],
             'description' => 'nullable|string|max:2000',
-            'quantity' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'unit_name' => 'nullable|string|max:255',
@@ -254,7 +268,6 @@ class SupermartController extends Controller
             'sku' => $validated['sku'],
             'category' => $validated['category'] ?? null,
             'description' => $validated['description'] ?? null,
-            'quantity' => $validated['quantity'],
             'price' => $validated['price'],
             'cost_price' => $validated['cost_price'] ?? 0,
             'unit_name' => $validated['unit_name'] ?? 'Piece',
@@ -352,6 +365,8 @@ class SupermartController extends Controller
             'supplier' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:1000',
         ]);
 
         $supplier = \App\Models\Api\Supplier::create($validated);
@@ -369,6 +384,8 @@ class SupermartController extends Controller
             'supplier' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:1000',
         ]);
 
         $supplier = \App\Models\Api\Supplier::findOrFail($id);

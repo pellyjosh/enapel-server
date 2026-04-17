@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
 
-    protected $fillable = ['supplier', 'company', 'phone'];
+    protected $fillable = ['supplier', 'company', 'phone', 'email', 'address'];
 
     public function purchases()
     {

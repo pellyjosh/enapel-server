@@ -34,6 +34,8 @@ export default function Pos({ products, categories }) {
     const [error, setError] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [activeSelectionStep, setActiveSelectionStep] = useState('variant'); // 'variant' or 'package'
+    const [activeItem, setActiveItem] = useState(null);
 
     // Barcode scanner logic
     useEffect(() => {
@@ -50,9 +52,37 @@ export default function Pos({ products, categories }) {
 
             if (e.key === 'Enter') {
                 if (scannerBuffer.length > 2) {
-                    const product = products.find(p => p.sku === scannerBuffer);
-                    if (product) {
-                        addToCart(product);
+                    let foundItem = null;
+                    let parentProduct = null;
+                    
+                    // Search main products
+                    foundItem = products.find(p => p.sku === scannerBuffer);
+                    if (foundItem) {
+                        parentProduct = foundItem;
+                    } else {
+                        // Search variations
+                        for (const p of products) {
+                            if (p.variations) {
+                                const variant = p.variations.find(v => v.sku === scannerBuffer);
+                                if (variant) {
+                                    foundItem = variant;
+                                    parentProduct = p;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (foundItem) {
+                        if (foundItem === parentProduct) {
+                            // Scanned a main product
+                            handleProductClick(foundItem);
+                        } else {
+                            // Scanned a variant - go straight to package selection for it
+                            setSelectedProduct(parentProduct);
+                            setActiveItem(foundItem);
+                            setActiveSelectionStep('package');
+                        }
                         setSearchTerm('');
                     }
                 }
@@ -74,33 +104,65 @@ export default function Pos({ products, categories }) {
         return matchesSearch && matchesCategory;
     }), [products, searchTerm, selectedCategory]);
 
+    const getItemKey = (item) => `${item.id}-${item.is_pack ? 'pack' : 'unit'}-${item.is_carton ? 'carton' : 'unit'}`;
+
+    const getUnitMultiplier = (item) => {
+        if (item.is_carton) return (Number(item.units_per_pack || 1) * Number(item.packs_per_carton || 1));
+        if (item.is_pack) return Number(item.units_per_pack || 1);
+        return 1;
+    };
+
     const addToCart = (product) => {
-        const existingItem = cart.find(item => item.id === product.id);
+        const itemKey = getItemKey(product);
+        const existingItem = cart.find(item => getItemKey(item) === itemKey);
+        
+        // Calculate total units already in cart for this product ID
+        const currentUnitsInCart = cart
+            .filter(item => item.id === product.id)
+            .reduce((sum, item) => sum + (item.quantity * getUnitMultiplier(item)), 0);
+            
+        const multiplier = getUnitMultiplier(product);
+        
+        if (currentUnitsInCart + multiplier > product.quantity) {
+            setError(`Insufficient stock. Only ${product.quantity} units available.`);
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
         if (existingItem) {
-            if (existingItem.quantity >= product.quantity) {
-                setError(`Only ${product.quantity} items available in stock.`);
-                setTimeout(() => setError(null), 3000);
-                return;
-            }
             setCart(cart.map(item => 
-                item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                getItemKey(item) === itemKey ? { ...item, quantity: item.quantity + 1 } : item
             ));
         } else {
-            setCart([...cart, { ...product, stock: product.quantity, quantity: 1, is_pack: false, is_carton: false }]);
+            setCart([...cart, { 
+                ...product, 
+                stock: product.quantity, // reference to total unit stock
+                quantity: 1, 
+                is_pack: !!product.is_pack, 
+                is_carton: !!product.is_carton 
+            }]);
         }
         if (isSidebarCollapsed) setIsSidebarCollapsed(false);
     };
 
-    const updateQuantity = (id, delta) => {
+    const updateQuantity = (key, delta) => {
         setCart(cart.map(item => {
-            if (item.id === id) {
+            if (getItemKey(item) === key) {
                 const newQty = item.quantity + delta;
                 if (newQty < 1) return item;
                 
-                if (delta > 0 && newQty > (item.stock || 0)) {
-                    setError(`Only ${item.stock} items available.`);
-                    setTimeout(() => setError(null), 2000);
-                    return item;
+                if (delta > 0) {
+                    const otherItemsUnits = cart
+                        .filter(i => i.id === item.id && getItemKey(i) !== key)
+                        .reduce((sum, i) => sum + (i.quantity * getUnitMultiplier(i)), 0);
+                    
+                    const totalUnitsRequested = otherItemsUnits + (newQty * getUnitMultiplier(item));
+                    
+                    if (totalUnitsRequested > (item.stock || 0)) {
+                        setError(`Only ${item.stock} units available in total.`);
+                        setTimeout(() => setError(null), 2000);
+                        return item;
+                    }
                 }
                 return { ...item, quantity: newQty };
             }
@@ -108,8 +170,8 @@ export default function Pos({ products, categories }) {
         }));
     };
 
-    const removeFromCart = (id) => {
-        setCart(cart.filter(item => item.id !== id));
+    const removeFromCart = (key) => {
+        setCart(cart.filter(item => getItemKey(item) !== key));
     };
 
     const clearCart = () => {
@@ -186,16 +248,34 @@ export default function Pos({ products, categories }) {
     };
 
     const handleProductClick = (product) => {
-        if ((product.variations && product.variations.length > 0) || (product.units_per_pack > 1) || (product.packs_per_carton > 1)) {
+        if (product.variations && product.variations.length > 0) {
             setSelectedProduct(product);
+            setActiveSelectionStep('variant');
+            setActiveItem(null);
+        } else if ((product.units_per_pack > 1) || (product.packs_per_carton > 1)) {
+            setSelectedProduct(product);
+            setActiveSelectionStep('package');
+            setActiveItem(product);
         } else {
             addToCart(product);
+        }
+    };
+
+    const handleItemSelection = (item) => {
+        if ((item.units_per_pack > 1) || (item.packs_per_carton > 1)) {
+            setActiveItem(item);
+            setActiveSelectionStep('package');
+        } else {
+            addToCart(item);
+            setSelectedProduct(null);
+            setActiveItem(null);
         }
     };
 
     const handleVariationSelect = (variation) => {
         addToCart(variation);
         setSelectedProduct(null);
+        setActiveItem(null);
     };
 
     return (
@@ -207,23 +287,23 @@ export default function Pos({ products, categories }) {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-orange-500/5 blur-[120px] rounded-full -z-10 animate-pulse" style={{ animationDelay: '2s' }}></div>
 
             {/* Left Side: Product Selection Section */}
-            <div className="flex-1 flex flex-col p-10 min-w-0 relative">
+            <div className="flex-1 flex flex-col p-4 min-w-0 relative">
                 {/* Header Row */}
-                <div className="mb-8 flex items-center justify-between gap-8">
+                <div className="mb-3 flex items-center justify-between gap-4">
                     <div className="space-y-1">
                         <div className="flex items-center gap-4">
-                             <div className="h-14 w-14 bg-white rounded-[20px] flex items-center justify-center shadow-premium inner-glow overflow-hidden">
+                             <div className="h-9 w-9 bg-white rounded-xl flex items-center justify-center shadow-premium inner-glow overflow-hidden">
                                 {branding?.logo ? (
                                     <img src={branding.logo} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
-                                    <ShoppingCart className="w-7 h-7 text-orange-600" />
+                                    <ShoppingCart className="w-4 h-4 text-orange-600" />
                                 )}
                              </div>
                              <div>
-                                <h1 className="text-4xl font-black text-[#0F172A] tracking-tighter leading-none">
+                                <h1 className="text-xl font-black text-[#0F172A] tracking-tighter leading-none">
                                     Point Of Sale
                                 </h1>
-                                <p className="text-[#64748B] font-bold text-[10px] uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+                                <p className="text-[#64748B] font-bold text-[9px] uppercase tracking-[0.2em] mt-0.5 flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-glow-emerald"></span>
                                     Terminal 01 • {new Date().toLocaleDateString()}
                                 </p>
@@ -234,23 +314,23 @@ export default function Pos({ products, categories }) {
                     <div className="flex-1 max-w-2xl">
                         <div className="relative group/search">
                             <div className="absolute inset-0 bg-blue-500/5 blur-2xl group-focus-within/search:bg-orange-500/10 transition-all rounded-full"></div>
-                            <Search className="w-6 h-6 absolute left-6 top-1/2 -translate-y-1/2 text-[#94A3B8] group-focus-within/search:text-orange-500 transition-colors" />
+                            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8] group-focus-within/search:text-orange-500 transition-colors" />
                             <input 
                                 type="text" 
                                 placeholder="Search products, SKUs..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-16 pr-8 py-6 rounded-full border-none glass-card focus:ring-8 focus:ring-orange-500/5 text-[#1E293B] font-bold placeholder-[#94A3B8] shadow-soft transition-all text-lg"
+                                className="w-full pl-10 pr-4 py-2.5 rounded-full border-none glass-card focus:ring-4 focus:ring-orange-500/5 text-[#1E293B] font-bold placeholder-[#94A3B8] shadow-soft transition-all text-sm"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Category Chips */}
-                <div className="mb-10 flex items-center gap-4 overflow-x-auto pb-4 custom-scrollbar no-scrollbar scroll-smooth">
+                <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar no-scrollbar scroll-smooth">
                     <button 
                         onClick={() => setSelectedCategory('All')}
-                        className={`px-8 py-4 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shrink-0 border-2 ${selectedCategory === 'All' ? 'bg-orange-600 border-orange-400 text-white shadow-xl shadow-orange-500/20' : 'bg-white/50 border-white/80 text-slate-500 hover:bg-white hover:border-orange-200'}`}
+                        className={`px-4 py-1.5 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all shrink-0 border ${selectedCategory === 'All' ? 'bg-orange-600 border-orange-400 text-white shadow-md shadow-orange-500/20' : 'bg-white/50 border-white/80 text-slate-500 hover:bg-white hover:border-orange-200'}`}
                     >
                         All Items
                     </button>
@@ -258,48 +338,48 @@ export default function Pos({ products, categories }) {
                         <button 
                             key={cat.id}
                             onClick={() => setSelectedCategory(cat.name)}
-                            className={`px-8 py-4 rounded-3xl font-black text-xs uppercase tracking-widest transition-all shrink-0 border-2 ${selectedCategory === cat.name ? 'bg-orange-600 border-orange-400 text-white shadow-xl shadow-orange-500/20' : 'bg-white/50 border-white/80 text-slate-500 hover:bg-white hover:border-orange-200'}`}
+                            className={`px-4 py-1.5 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all shrink-0 border ${selectedCategory === cat.name ? 'bg-orange-600 border-orange-400 text-white shadow-md shadow-orange-500/20' : 'bg-white/50 border-white/80 text-slate-500 hover:bg-white hover:border-orange-200'}`}
                         >
                             {cat.name}
                         </button>
                     ))}
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar grid gap-6 pb-12 items-start" 
-                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar grid gap-3 pb-4 items-start" 
+                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
                     {filteredProducts.map(product => (
                         <button 
                             key={product.id} 
                             onClick={() => handleProductClick(product)}
-                            className="bg-white/40 glass-card rounded-[40px] p-2 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-2 group transition-all duration-500 text-left flex flex-col active:scale-[0.97] inner-glow relative min-h-[340px]"
+                            className="bg-white/40 glass-card rounded-2xl p-1.5 hover:shadow-lg hover:shadow-orange-500/10 hover:-translate-y-1 group transition-all duration-300 text-left flex flex-col active:scale-[0.97] inner-glow relative min-h-[160px]"
                         >
-                            <div className="aspect-[5/4] bg-white/80 rounded-[34px] flex items-center justify-center relative overflow-hidden group-hover:bg-white transition-colors duration-500 shadow-sm shrink-0">
-                                <span className="text-6xl transform group-hover:scale-125 transition-transform duration-700 drop-shadow-md">
+                            <div className="aspect-[5/4] bg-white/80 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:bg-white transition-colors duration-300 shadow-sm shrink-0">
+                                <span className="text-3xl transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
                                     {product.category?.toLowerCase().includes('drink') ? '🥤' : 
                                      product.category?.toLowerCase().includes('fruit') ? '🍎' : 
                                      product.category?.toLowerCase().includes('snack') ? '🍪' : '🥫'}
                                 </span>
                                 
                                 {product.variations?.length > 0 && (
-                                    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-2xl shadow-lg border border-orange-100 flex items-center gap-2 animate-in slide-in-from-bottom-2">
-                                        <div className="flex items-center justify-center w-5 h-5 bg-orange-100 rounded-full text-orange-600">
-                                            <Plus className="w-3 h-3" />
+                                    <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur px-2 py-1 rounded-xl shadow-md border border-orange-100 flex items-center gap-1 animate-in slide-in-from-bottom-2">
+                                        <div className="flex items-center justify-center w-3.5 h-3.5 bg-orange-100 rounded-full text-orange-600">
+                                            <Plus className="w-2 h-2" />
                                         </div>
-                                        <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest leading-none">
+                                        <span className="text-[8px] font-black text-slate-900 uppercase tracking-wider leading-none">
                                             {product.variations.length} Variants
                                         </span>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="p-6 flex flex-col flex-1">
-                                <div className="mb-4">
+                            <div className="p-2 flex flex-col flex-1">
+                                <div className="mb-1">
                                     <div className="flex items-center gap-2 mb-1.5">
                                         <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-[8px] font-black text-slate-400 uppercase tracking-tighter">
                                             {product.category || 'General'}
                                         </span>
                                     </div>
-                                    <h3 className="font-black text-[#1E293B] text-lg leading-tight line-clamp-2 min-h-[3.5rem] group-hover:text-orange-600 transition-colors capitalize">
+                                    <h3 className="font-black text-[#1E293B] text-xs leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors capitalize">
                                         {product.name}
                                     </h3>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-70">
@@ -307,17 +387,17 @@ export default function Pos({ products, categories }) {
                                     </p>
                                 </div>
 
-                                <div className="mt-auto flex items-end justify-between gap-2">
+                                <div className="mt-1 flex items-end justify-between gap-1">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1.5">Price</span>
-                                        <span className="font-black text-[#0F172A] text-2xl leading-none tracking-tighter whitespace-nowrap">
-                                            <span className="text-orange-500 text-sm mr-1">₦</span>
+                                        <span className="font-black text-[#0F172A] text-sm leading-none tracking-tighter whitespace-nowrap">
+                                            <span className="text-orange-500 text-[10px] mr-0.5">₦</span>
                                             {Math.floor(product.price).toLocaleString()}
                                         </span>
                                     </div>
-                                    <div className={`px-3 py-2 rounded-2xl text-right transition-all border shrink-0 ${product.quantity <= 10 ? 'bg-orange-50 border-orange-100 text-orange-600 shadow-glow-orange' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                                    <div className={`px-2 py-1 rounded-xl text-right transition-all border shrink-0 ${product.quantity <= 10 ? 'bg-orange-50 border-orange-100 text-orange-600' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
                                         <p className="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1.5">Stock</p>
-                                        <p className="text-sm font-black leading-none">{product.quantity}</p>
+                                        <p className="text-xs font-black leading-none">{product.quantity}</p>
                                     </div>
                                 </div>
                             </div>
@@ -338,26 +418,26 @@ export default function Pos({ products, categories }) {
             </div>
 
             {/* Right Side: Enhanced Collapsible Checkout Sidebar */}
-            <div className={`relative transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1) glass-dark flex flex-col z-20 shadow-2xl ${isSidebarCollapsed ? 'w-[80px]' : 'w-full md:w-[480px]'}`}>
+            <div className={`relative transition-all duration-700 glass-dark flex flex-col z-20 shadow-2xl ${isSidebarCollapsed ? 'w-[60px]' : 'w-full md:w-[400px]'}`}>
                 {/* Visual Glow Accent */}
                 <div className="absolute top-[10%] right-[-20%] w-[300px] h-[300px] bg-orange-500/10 blur-[100px] rounded-full -z-10 animate-pulse"></div>
 
                 {/* Toggle Button */}
                 <button 
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    className="absolute -left-5 top-1/2 -translate-y-1/2 w-10 h-24 bg-[#1E293B] border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-orange-600 transition-all z-30 shadow-2xl active:scale-90"
+                    className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-16 bg-[#1E293B] border border-white/10 rounded-xl flex items-center justify-center text-white hover:bg-orange-600 transition-all z-30 shadow-2xl active:scale-90"
                 >
-                    <ChevronRight className={`w-7 h-7 transition-all duration-700 ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
+                    <ChevronRight className={`w-4 h-4 transition-all duration-700 ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
                 </button>
 
                 {isSidebarCollapsed ? (
                     /* Collapsed Icon-Only Mode */
-                    <div className="h-full flex flex-col items-center py-12 space-y-10">
+                    <div className="h-full flex flex-col items-center py-6 space-y-4">
                         <div 
                            onClick={() => setIsSidebarCollapsed(false)}
-                           className="h-16 w-16 bg-white/5 rounded-[24px] flex items-center justify-center text-orange-500 border border-white/10 relative cursor-pointer hover:bg-white/10 transition-all shadow-glow-orange"
+                           className="h-10 w-10 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500 border border-white/10 relative cursor-pointer hover:bg-white/10 transition-all shadow-glow-orange"
                         >
-                            <ShoppingCart className="w-8 h-8" />
+                            <ShoppingCart className="w-5 h-5" />
                             {cart.length > 0 && (
                                 <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-full border-2 border-[#111827] shadow-2xl animate-bounce">
                                     {cart.length}
@@ -380,9 +460,9 @@ export default function Pos({ products, categories }) {
                              {cart.length > 0 && (
                                  <button 
                                     onClick={() => setIsSidebarCollapsed(false)}
-                                    className="w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-glow-orange active:scale-90 transition-all"
+                                    className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-glow-orange active:scale-90 transition-all"
                                  >
-                                    <CreditCard className="w-6 h-6" />
+                                    <CreditCard className="w-5 h-5" />
                                  </button>
                              )}
                         </div>
@@ -390,11 +470,11 @@ export default function Pos({ products, categories }) {
                 ) : (
                     /* Full Mode - Restored & Fully Functional */
                     <>
-                        <div className="p-6 border-b border-white/10 relative overflow-hidden">
+                        <div className="p-3 border-b border-white/10 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full"></div>
                             <div className="flex items-center justify-between relative z-10">
                                 <div>
-                                    <h2 className="text-xl font-black text-white tracking-tighter leading-none">
+                                    <h2 className="text-sm font-black text-white tracking-tighter leading-none">
                                         Checkout
                                     </h2>
                                     <div className="flex items-center gap-3 mt-2">
@@ -420,7 +500,7 @@ export default function Pos({ products, categories }) {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar scrollbar-dark">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar scrollbar-dark">
                             {error && (
                                 <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-400 text-xs font-bold animate-in slide-in-from-top-4 mb-4">
                                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -440,21 +520,25 @@ export default function Pos({ products, categories }) {
                             ) : (
                                 cart.map((item, index) => (
                                     <div key={`${item.id}-${index}`} 
-                                        className="flex gap-4 p-4 rounded-[28px] bg-white/[0.03] border border-white/5 group hover:bg-white/[0.08] transition-all relative overflow-hidden animate-in slide-in-from-right duration-300"
+                                        className="flex gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.08] transition-all relative overflow-hidden animate-in slide-in-from-right duration-300"
                                         style={{ animationDelay: `${index * 30}ms` }}
                                     >
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-2xl shrink-0 border border-white/5 shadow-inner">
+                                        <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-lg shrink-0 border border-white/5 shadow-inner">
                                             {item.category?.toLowerCase().includes('drink') ? '🥤' : 
                                              item.category?.toLowerCase().includes('fruit') ? '🍎' : '🥫'}
                                         </div>
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                <div className="flex-1 min-w-0 flex flex-col justify-center">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 overflow-hidden">
-                                                    <p className="font-black text-xs text-white truncate leading-tight group-hover:text-orange-400 transition-colors uppercase">{item.name}</p>
-                                                    <p className="text-[8px] text-slate-500 font-black tracking-widest uppercase mt-0.5 opacity-60">{item.sku || 'GEN'}</p>
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <p className="font-black text-xs text-white truncate group-hover:text-orange-400 transition-colors uppercase">{item.name}</p>
+                                                        {item.is_carton && <span className="px-1 py-0.5 bg-orange-500/20 text-orange-500 text-[7px] font-black rounded uppercase tracking-tighter">Carton</span>}
+                                                        {item.is_pack && <span className="px-1 py-0.5 bg-blue-500/20 text-blue-500 text-[7px] font-black rounded uppercase tracking-tighter">Pack</span>}
+                                                    </div>
+                                                    <p className="text-[8px] text-slate-500 font-black tracking-widest uppercase opacity-60">{item.sku || 'GEN'}</p>
                                                 </div>
                                                 <button 
-                                                    onClick={() => removeFromCart(item.id)}
+                                                    onClick={() => removeFromCart(getItemKey(item))}
                                                     className="text-slate-600 hover:text-rose-500 p-1.5 transition-all shrink-0"
                                                 >
                                                     <X className="w-3.5 h-3.5" />
@@ -468,12 +552,12 @@ export default function Pos({ products, categories }) {
                                                 
                                                 <div className="flex items-center gap-3 bg-black/50 px-2 py-1 rounded-xl border border-white/5">
                                                     <button 
-                                                        onClick={() => updateQuantity(item.id, -1)}
+                                                        onClick={() => updateQuantity(getItemKey(item), -1)}
                                                         className="w-6 h-6 rounded-lg text-slate-500 hover:text-white flex items-center justify-center transition-all bg-white/5"
                                                     ><Minus className="w-3 h-3" /></button>
                                                     <span className="font-black text-xs text-white w-4 text-center">{item.quantity}</span>
                                                     <button 
-                                                        onClick={() => updateQuantity(item.id, 1)}
+                                                        onClick={() => updateQuantity(getItemKey(item), 1)}
                                                         className="w-6 h-6 rounded-lg text-slate-500 hover:text-white flex items-center justify-center transition-all bg-white/5"
                                                     ><Plus className="w-3 h-3" /></button>
                                                 </div>
@@ -485,10 +569,10 @@ export default function Pos({ products, categories }) {
                         </div>
 
                         {/* Finalize Section - The Core "Missing" part being refined */}
-                        <div className="p-6 bg-black/40 border-t border-white/10 space-y-4 backdrop-blur-3xl relative">
+                        <div className="p-3 bg-black/40 border-t border-white/10 space-y-2 backdrop-blur-3xl relative">
                             <div className="flex justify-between items-center group/total cursor-pointer">
                                 <span className="text-white font-black text-sm tracking-widest uppercase opacity-60">Total Due</span>
-                                <span className="text-3xl font-black text-white text-glow-orange tracking-tighter">
+                                <span className="text-xl font-black text-white text-glow-orange tracking-tighter">
                                     <span className="text-orange-600 text-base mr-1.5 font-black">₦</span>
                                     {totalPrice.toLocaleString()}
                                 </span>
@@ -520,7 +604,7 @@ export default function Pos({ products, categories }) {
                                             placeholder="Amount Received" 
                                             value={cashPaid}
                                             onChange={e => setCashPaid(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-4 rounded-2xl bg-white/5 border-white/10 text-white font-black focus:ring-2 focus:ring-orange-500/20 text-lg outline-none"
+                                            className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-white/5 border-white/10 text-white font-black focus:ring-2 focus:ring-orange-500/20 text-sm outline-none"
                                         />
                                         {cashPaid && (
                                             <div className={`mt-2 flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${changeDue >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -533,7 +617,7 @@ export default function Pos({ products, categories }) {
                                 <button 
                                     disabled={cart.length === 0 || isSubmitting}
                                     onClick={handleCheckout}
-                                    className={`w-full py-4 rounded-2xl font-black text-white text-base tracking-[0.2em] transition-all relative overflow-hidden group/pay active:scale-95 ${
+                                    className={`w-full py-3 rounded-xl font-black text-white text-xs tracking-[0.15em] transition-all relative overflow-hidden group/pay active:scale-95 ${
                                         cart.length === 0 || isSubmitting 
                                         ? 'bg-white/5 cursor-not-allowed text-slate-700' 
                                         : 'bg-orange-600 hover:bg-orange-500 shadow-lg'
@@ -547,126 +631,188 @@ export default function Pos({ products, categories }) {
                 )}
             </div>
 
-            {/* Variation Selection Modal */}
+            {/* Variation/Package Selection Modal */}
             {selectedProduct && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-slate-950/90 backdrop-blur-3xl animate-in fade-in duration-700">
-                    <div className="bg-white w-full max-w-2xl rounded-[64px] shadow-premium overflow-hidden animate-in zoom-in-95 duration-500 border border-white/20">
-                        <div className="p-14 border-b border-slate-100 bg-gradient-to-br from-orange-50/50 to-blue-50/50 relative">
-                            <button 
-                                onClick={() => setSelectedProduct(null)}
-                                className="absolute top-8 right-8 p-5 bg-white/80 backdrop-blur hover:bg-rose-50 rounded-[28px] text-slate-400 hover:text-rose-500 shadow-xl transition-all border border-white group"
-                            >
-                                <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
-                            </button>
+                    <div className="bg-white w-full max-w-xl rounded-3xl shadow-premium overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                        <div className="p-6 border-b border-slate-100 bg-gradient-to-br from-orange-50/50 to-blue-50/50 relative">
+                            <div className="flex items-center gap-3 mb-2">
+                                {activeSelectionStep === 'package' && selectedProduct.variations?.length > 0 && (
+                                    <button 
+                                        onClick={() => {
+                                            setActiveSelectionStep('variant');
+                                            setActiveItem(null);
+                                        }}
+                                        className="p-1.5 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-400 hover:text-orange-600 transition-all"
+                                    >
+                                        <ArrowRightLeft className="w-3.5 h-3.5 rotate-180" />
+                                    </button>
+                                )}
+                                <p className="text-orange-600 font-black text-[9px] uppercase tracking-[0.4em]">
+                                    {activeSelectionStep === 'variant' ? 'Variation Selector' : 'Package Selector'}
+                                </p>
+                            </div>
                             
-                            <p className="text-orange-600 font-black text-[11px] uppercase tracking-[0.6em] mb-4">Package/Variation Selector</p>
-                            <h2 className="text-4xl font-black text-[#0F172A] tracking-tighter leading-tight pr-12">{selectedProduct.name}</h2>
-                            <div className="flex items-center gap-4 mt-6">
-                                <span className="px-5 py-2.5 bg-white shadow-sm border border-slate-200 rounded-2xl text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    REF: {selectedProduct.sku || 'N/A'}
+                            <h2 className="text-xl font-black text-[#0F172A] tracking-tighter leading-tight pr-10">
+                                {activeSelectionStep === 'variant' ? selectedProduct.name : (activeItem?.variation_name ? `${selectedProduct.name} (${activeItem.variation_name})` : selectedProduct.name)}
+                            </h2>
+                            
+                            <div className="flex items-center gap-3 mt-3">
+                                <span className="px-3 py-1.5 bg-white shadow-sm border border-slate-200 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-wide">
+                                    REF: {activeItem?.sku || selectedProduct.sku || 'N/A'}
                                 </span>
-                                <span className="px-5 py-2.5 bg-emerald-500/10 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                                    Availability: {selectedProduct.quantity} UNITS
+                                <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-wide border border-emerald-500/20">
+                                    Availability: {activeItem?.quantity || selectedProduct.quantity} UNITS
                                 </span>
                             </div>
+
+                            <button 
+                                onClick={() => {
+                                    setSelectedProduct(null);
+                                    setActiveItem(null);
+                                }}
+                                className="absolute top-4 right-4 p-2.5 bg-white/80 backdrop-blur hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-500 shadow-xl transition-all border border-white group"
+                            >
+                                <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
                         </div>
 
-                        <div className="p-12 max-h-[50vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC] space-y-5">
+                        <div className="p-4 max-h-[55vh] overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
                             <div className="grid grid-cols-1 gap-4">
-                                {/* Base Option */}
-                                <button 
-                                    onClick={() => handleVariationSelect({ ...selectedProduct, is_pack: false, is_carton: false })}
-                                    className="p-7 bg-white rounded-[44px] border-2 border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-premium hover:shadow-2xl"
-                                >
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-18 h-18 bg-slate-50 rounded-3xl flex items-center justify-center text-4xl group-hover:bg-orange-50 transition-colors duration-500 shadow-inner">📦</div>
-                                        <div className="text-left">
-                                            <p className="font-black text-2xl text-[#0F172A]">Standard Unit ({selectedProduct.unit_name || 'Piece'})</p>
-                                            <p className="text-xs text-[#94A3B8] font-bold uppercase tracking-widest mt-1">Single product sale</p>
+                                {activeSelectionStep === 'variant' ? (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        {/* Main Product as "Standard" Option */}
+                                        <button 
+                                            onClick={() => handleItemSelection(selectedProduct)}
+                                            className="w-full p-4 bg-white rounded-2xl border border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
+                                        >
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-orange-50 transition-colors duration-300 shadow-inner">📦</div>
+                                                <div className="text-left">
+                                                    <p className="font-black text-sm text-[#0F172A]">Standard / Base Option</p>
+                                                    <p className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wide mt-0.5">Original selection</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-black text-[#0F172A] tracking-tighter mb-1">₦{Math.floor(selectedProduct.price).toLocaleString()}</p>
+                                                <span className="text-[9px] text-slate-400 font-black uppercase tracking-wide bg-slate-50 px-2 py-1 rounded-lg">Stock: {selectedProduct.quantity}</span>
+                                            </div>
+                                        </button>
+
+                                        <div className="flex items-center gap-4 py-2 opacity-50">
+                                            <div className="h-px bg-slate-200 flex-1"></div>
+                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">Available Variations</span>
+                                            <div className="h-px bg-slate-200 flex-1"></div>
                                         </div>
+
+                                        {selectedProduct.variations.map((variation, vidx) => (
+                                            <button 
+                                                key={variation.id}
+                                                onClick={() => handleItemSelection(variation)}
+                                                className="w-full p-4 bg-white rounded-2xl border border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
+                                                style={{ animationDelay: `${vidx * 50}ms` }}
+                                            >
+                                                <div className="flex items-center gap-6">
+                                                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-orange-500 group-hover:text-white transition-all duration-300 shadow-inner">✨</div>
+                                                    <div className="text-left">
+                                                        <p className="font-black text-sm text-[#0F172A]">{variation.variation_name || variation.name}</p>
+                                                        <p className="text-[10px] text-orange-600 font-black uppercase tracking-wide mt-0.5">{variation.unit_name || 'Individual Variant'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-black text-[#0F172A] tracking-tighter mb-1">₦{Math.floor(variation.price).toLocaleString()}</p>
+                                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wide bg-slate-50 px-2 py-1 rounded-lg">Stock: {variation.quantity}</span>
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-4xl font-black text-[#0F172A] tracking-tighter mb-1">₦{Math.floor(selectedProduct.price).toLocaleString()}</p>
-                                        <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-xl">Available</span>
+                                ) : (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        {/* Package Options for activeItem */}
+                                        <button 
+                                            onClick={() => handleVariationSelect({ ...activeItem, is_pack: false, is_carton: false })}
+                                            className="w-full p-4 bg-white rounded-2xl border border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
+                                        >
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-orange-50 transition-colors duration-300 shadow-inner">🧴</div>
+                                                <div className="text-left">
+                                                    <p className="font-black text-sm text-[#0F172A]">Standard Unit ({activeItem.unit_name || 'Piece'})</p>
+                                                    <p className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wide mt-0.5">Single unit sale</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-black text-[#0F172A] tracking-tighter mb-1">₦{Math.floor(activeItem.price).toLocaleString()}</p>
+                                                <span className="text-[9px] text-emerald-500 font-black uppercase tracking-wide bg-emerald-50 px-2 py-1 rounded-lg">Available</span>
+                                            </div>
+                                        </button>
+
+                                        {activeItem.units_per_pack > 1 && (
+                                            <button 
+                                                onClick={() => handleVariationSelect({ ...activeItem, is_pack: true, is_carton: false })}
+                                                disabled={activeItem.quantity < activeItem.units_per_pack}
+                                                className={`w-full p-4 rounded-2xl border transition-all flex items-center justify-between group shadow-sm hover:shadow-md ${activeItem.quantity < activeItem.units_per_pack ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed' : 'bg-white border-transparent hover:border-orange-500'}`}
+                                            >
+                                                <div className="flex items-center gap-6">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl transition-all duration-300 shadow-inner ${activeItem.quantity < activeItem.units_per_pack ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-500 group-hover:text-white'}`}>🎁</div>
+                                                    <div className="text-left">
+                                                        <p className="font-black text-sm text-[#0F172A]">Full Pack (x{activeItem.units_per_pack})</p>
+                                                        <p className="text-[10px] text-blue-600 font-black uppercase tracking-wide mt-0.5">Bulk units</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-black text-[#0F172A] tracking-tighter mb-1">
+                                                        ₦{Math.floor(activeItem.pack_price_override || (activeItem.price * activeItem.units_per_pack)).toLocaleString()}
+                                                    </p>
+                                                    {activeItem.quantity < activeItem.units_per_pack ? (
+                                                        <span className="text-[9px] text-rose-500 font-black uppercase tracking-wide bg-rose-50 px-2 py-1 rounded-lg">Out of Stock</span>
+                                                    ) : (
+                                                        <span className="text-[9px] text-blue-500 font-black uppercase tracking-wide bg-blue-50 px-2 py-1 rounded-lg">Bulk Rate</span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        )}
+
+                                        {activeItem.packs_per_carton > 1 && (
+                                            <button 
+                                                onClick={() => handleVariationSelect({ ...activeItem, is_pack: false, is_carton: true })}
+                                                disabled={activeItem.quantity < (activeItem.units_per_pack * activeItem.packs_per_carton)}
+                                                className={`w-full p-4 rounded-2xl border transition-all flex items-center justify-between group shadow-sm hover:shadow-md ${activeItem.quantity < (activeItem.units_per_pack * activeItem.packs_per_carton) ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed' : 'bg-white border-transparent hover:border-orange-500'}`}
+                                            >
+                                                <div className="flex items-center gap-6">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl transition-all duration-300 shadow-inner ${activeItem.quantity < (activeItem.units_per_pack * activeItem.packs_per_carton) ? 'bg-slate-200 text-slate-400' : 'bg-orange-50 text-orange-600 group-hover:bg-orange-600 group-hover:text-white'}`}>🚛</div>
+                                                    <div className="text-left">
+                                                        <p className="font-black text-sm text-[#0F172A]">Full Carton (x{activeItem.packs_per_carton} packs)</p>
+                                                        <p className="text-[10px] text-orange-600 font-black uppercase tracking-wide mt-0.5">Wholesale rate</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-black text-[#0F172A] tracking-tighter mb-1">
+                                                        ₦{Math.floor(
+                                                            activeItem.carton_price_override || (
+                                                                (activeItem.pack_price_override || (activeItem.price * activeItem.units_per_pack)) * activeItem.packs_per_carton
+                                                            )
+                                                        ).toLocaleString()}
+                                                    </p>
+                                                    {activeItem.quantity < (activeItem.units_per_pack * activeItem.packs_per_carton) ? (
+                                                        <span className="text-[9px] text-rose-500 font-black uppercase tracking-wide bg-rose-50 px-2 py-1 rounded-lg">Out of Stock</span>
+                                                    ) : (
+                                                        <span className="text-[9px] text-orange-500 font-black uppercase tracking-wide bg-orange-50 px-2 py-1 rounded-lg">Wholesale</span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        )}
                                     </div>
-                                </button>
-
-                                {/* Pack Option if applicable */}
-                                {selectedProduct.units_per_pack > 1 && (
-                                    <button 
-                                        onClick={() => handleVariationSelect({ ...selectedProduct, is_pack: true, is_carton: false })}
-                                        className="p-7 bg-white rounded-[44px] border-2 border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-premium hover:shadow-2xl animate-in slide-in-from-bottom-4"
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-18 h-18 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center text-4xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-700 shadow-inner">🎁</div>
-                                            <div className="text-left">
-                                                <p className="font-black text-2xl text-[#0F172A]">Full Pack (x{selectedProduct.units_per_pack})</p>
-                                                <p className="text-xs text-blue-600 font-black uppercase tracking-widest mt-1">Bulk units</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-4xl font-black text-[#0F172A] tracking-tighter mb-1">
-                                                ₦{Math.floor(selectedProduct.pack_price_override || (selectedProduct.price * selectedProduct.units_per_pack)).toLocaleString()}
-                                            </p>
-                                            <span className="text-[10px] text-blue-500 font-black uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-xl">Bulk Rate</span>
-                                        </div>
-                                    </button>
                                 )}
-
-                                {/* Carton Option if applicable */}
-                                {selectedProduct.packs_per_carton > 1 && (
-                                    <button 
-                                        onClick={() => handleVariationSelect({ ...selectedProduct, is_pack: false, is_carton: true })}
-                                        className="p-7 bg-white rounded-[44px] border-2 border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-premium hover:shadow-2xl animate-in slide-in-from-bottom-8"
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-18 h-18 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center text-4xl group-hover:bg-orange-600 group-hover:text-white transition-all duration-700 shadow-inner">🚛</div>
-                                            <div className="text-left">
-                                                <p className="font-black text-2xl text-[#0F172A]">Full Carton (x{selectedProduct.packs_per_carton} packs)</p>
-                                                <p className="text-xs text-orange-600 font-black uppercase tracking-widest mt-1">Wholesale rate</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-4xl font-black text-[#0F172A] tracking-tighter mb-1">
-                                                ₦{Math.floor(
-                                                    selectedProduct.carton_price_override || (
-                                                        (selectedProduct.pack_price_override || (selectedProduct.price * selectedProduct.units_per_pack)) * selectedProduct.packs_per_carton
-                                                    )
-                                                ).toLocaleString()}
-                                            </p>
-                                            <span className="text-[10px] text-orange-500 font-black uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-xl">Wholesale</span>
-                                        </div>
-                                    </button>
-                                )}
-
-                                {/* Variants */}
-                                {selectedProduct.variations.map((variation, vidx) => (
-                                    <button 
-                                        key={variation.id}
-                                        onClick={() => handleVariationSelect(variation)}
-                                        className="p-7 bg-white rounded-[44px] border-2 border-transparent hover:border-orange-500 transition-all flex items-center justify-between group shadow-premium hover:shadow-2xl animate-in slide-in-from-bottom-8 duration-500"
-                                        style={{ animationDelay: `${vidx * 100}ms` }}
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-18 h-18 bg-orange-50 rounded-3xl flex items-center justify-center text-4xl group-hover:bg-orange-500 group-hover:text-white transition-all duration-700 shadow-inner">✨</div>
-                                            <div className="text-left">
-                                                <p className="font-black text-2xl text-[#0F172A]">{variation.variation_name || variation.name}</p>
-                                                <p className="text-xs text-orange-600 font-black uppercase tracking-widest mt-1">{variation.unit_name || 'Individual Variant'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-4xl font-black text-[#0F172A] tracking-tighter mb-1">₦{Math.floor(variation.price).toLocaleString()}</p>
-                                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-xl">Stock: {variation.quantity}</span>
-                                        </div>
-                                    </button>
-                                ))}
                             </div>
                         </div>
                         
-                        <div className="p-12 bg-white border-t border-slate-100 flex justify-center">
+                        <div className="p-4 bg-white border-t border-slate-100 flex justify-center">
                             <button 
-                                onClick={() => setSelectedProduct(null)}
-                                className="px-16 py-6 rounded-full bg-slate-100 text-slate-500 font-black text-xs tracking-[0.5em] hover:bg-slate-900 hover:text-white transition-all duration-500 active:scale-95 uppercase"
+                                onClick={() => {
+                                    setSelectedProduct(null);
+                                    setActiveItem(null);
+                                }}
+                                className="px-10 py-2.5 rounded-full bg-slate-100 text-slate-500 font-black text-xs tracking-[0.3em] hover:bg-slate-900 hover:text-white transition-all duration-300 active:scale-95 uppercase"
                             >
                                 Cancel Selection
                             </button>
@@ -678,20 +824,20 @@ export default function Pos({ products, categories }) {
             {/* Success Modal - Refined Data Handling */}
             {successData && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-8 bg-slate-950/95 backdrop-blur-3xl animate-in fade-in duration-700">
-                    <div className="bg-white w-full max-w-lg rounded-[72px] shadow-premium overflow-hidden p-16 text-center animate-in zoom-in-90 duration-700 border border-white/20 relative">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-premium overflow-hidden p-8 text-center animate-in zoom-in-90 duration-500 border border-white/20 relative">
                         {/* Sparkle effects */}
                         <div className="absolute top-10 right-10 w-4 h-4 bg-orange-400 rounded-full animate-ping"></div>
                         <div className="absolute bottom-20 left-10 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
 
-                        <div className="w-36 h-36 bg-emerald-500 rounded-[54px] flex items-center justify-center mx-auto mb-12 shadow-glow-emerald rotate-12 transition-transform hover:rotate-0 duration-1000">
-                            <CheckCircle2 className="w-20 h-20 text-white" />
+                        <div className="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-glow-emerald rotate-12 transition-transform hover:rotate-0 duration-700">
+                            <CheckCircle2 className="w-10 h-10 text-white" />
                         </div>
-                        <h2 className="text-6xl font-black text-slate-900 tracking-tighter mb-4 leading-none uppercase">Sale Complete</h2>
-                        <p className="text-slate-500 font-bold text-xl leading-relaxed max-w-[320px] mx-auto opacity-80">
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-2 leading-none uppercase">Sale Complete</h2>
+                        <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-[280px] mx-auto opacity-80">
                             Transaction authorized. {successData.payment_method === 'cash' && 'Cash Drawer Opened.'} Inventory stock has been deducted.
                         </p>
                         
-                        <div className="my-14 p-10 bg-slate-50 rounded-[48px] border-2 border-slate-100 space-y-6 relative overflow-hidden">
+                        <div className="my-5 p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full"></div>
                             <div className="flex justify-between items-center px-2">
                                 <span className="text-slate-400 font-black text-xs uppercase tracking-[0.2em]">Sale Receipt</span>
@@ -700,21 +846,21 @@ export default function Pos({ products, categories }) {
                             <div className="h-px bg-slate-200/60 w-full"></div>
                             <div className="flex justify-between items-center px-2">
                                 <span className="text-slate-400 font-black text-xs uppercase tracking-[0.2em]">Total Amount</span>
-                                <span className="text-4xl font-black text-orange-600 tracking-tighter">₦{Number(successData.total_price).toLocaleString()}</span>
+                                <span className="text-2xl font-black text-orange-600 tracking-tighter">₦{Number(successData.total_price).toLocaleString()}</span>
                             </div>
                         </div>
 
                         <div className="space-y-5">
                             <button 
                                 onClick={() => window.print()}
-                                className="w-full py-8 rounded-[40px] bg-slate-900 text-white font-black text-xl tracking-[0.2em] hover:bg-orange-600 shadow-premium transition-all active:scale-95 flex items-center justify-center gap-5 group"
+                                className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-sm tracking-[0.15em] hover:bg-orange-600 shadow-premium transition-all active:scale-95 flex items-center justify-center gap-3 group"
                             >
-                                <Receipt className="w-7 h-7 group-hover:animate-bounce" />
+                                <Receipt className="w-4 h-4 group-hover:animate-bounce" />
                                 PRINT RECEIPT
                             </button>
                             <button 
                                 onClick={startNewSale}
-                                className="w-full py-7 rounded-[40px] bg-white text-slate-400 font-black text-xs tracking-[0.5em] hover:text-orange-600 transition-all border-2 border-slate-100 hover:border-orange-200 uppercase"
+                                className="w-full py-3 rounded-2xl bg-white text-slate-400 font-black text-xs tracking-[0.3em] hover:text-orange-600 transition-all border border-slate-100 hover:border-orange-200 uppercase"
                             >
                                 Start New Sale
                             </button>

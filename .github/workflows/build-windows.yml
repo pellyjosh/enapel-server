@@ -103,3 +103,13 @@ jobs:
         with:
           name: enapel-server-windows
           path: dist/*.exe
+
+      - name: Publish latest Windows build
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest-windows"
+          prerelease: true
+          title: "Development Build (Windows)"
+          files: |
+            dist/*.exe

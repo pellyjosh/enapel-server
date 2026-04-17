@@ -3,7 +3,7 @@ import Pagination from '@/Components/Pagination';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 import TablePlaceholder from '@/Components/TablePlaceholder';
 
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 
 
@@ -13,6 +13,8 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
     const [isQuickAddingSupplier, setIsQuickAddingSupplier] = useState(false);
     const [adjustingId, setAdjustingId] = useState('');
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [adjustmentType, setAdjustmentType] = useState('add'); // 'add' or 'remove'
+    const [adjustmentAmount, setAdjustmentAmount] = useState('');
 
     const allProductsItems = allProducts || [];
     const suppliersList = suppliers || [];
@@ -64,6 +66,8 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
             supplier_id: '',
         });
         setIsAdjusting(true);
+        setAdjustmentType('add');
+        setAdjustmentAmount('');
     };
 
     const openAdjustFromHeader = () => {
@@ -178,6 +182,12 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
                                                 >
                                                     Adjust
                                                 </button>
+                                                <Link
+                                                    href={route('supermart.stock.history', item.id)}
+                                                    className="text-indigo-600 hover:text-indigo-800 font-bold text-xs bg-indigo-50 px-3 py-1.5 rounded-lg"
+                                                >
+                                                    History
+                                                </Link>
                                                 <button
                                                     type="button"
                                                     onClick={() => setItemToDelete(item)}
@@ -194,6 +204,13 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
                         </tbody>
                     </table>
 
+                    {errors.delete && (
+                        <div className="mx-6 my-4 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 animate-in slide-in-from-top-2 duration-300">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <p className="text-xs font-black uppercase tracking-wider">{errors.delete}</p>
+                        </div>
+                    )}
+
                     {inventoryData.length === 0 && (
                         <TablePlaceholder 
                             title="No inventory items"
@@ -205,6 +222,7 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
             </div>
 
             <Pagination links={inventory.links} />
+
 
             {isAdjusting && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -291,33 +309,90 @@ export default function Stock({ inventory = { data: [], links: [] }, allProducts
                                     {errors.expiry_date && <p className="text-red-500 text-xs mt-1">{errors.expiry_date}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">New Quantity</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Unit Price (₦)</label>
                                     <input
                                         type="number"
                                         min="0"
-                                        value={data.quantity}
-                                        onChange={e => setData('quantity', e.target.value)}
+                                        step="0.01"
+                                        value={data.price}
+                                        onChange={e => setData('price', e.target.value)}
                                         className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                        required
                                     />
-                                    {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
+                                    {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Unit Price (₦)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={data.price}
-                                    onChange={e => setData('price', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                />
-                                {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
-                            </div>
+
                             {currentItem && (
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest px-1">Category: {currentItem.category || 'Uncategorized'}</p>
                             )}
+
+                            <div className="bg-blue-50/50 p-6 rounded-[30px] border border-blue-100/50 space-y-6">
+                                <div className="flex p-1 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAdjustmentType('add');
+                                            if (currentItem) {
+                                                const current = Number(currentItem.quantity || 0);
+                                                const amount = Number(adjustmentAmount || 0);
+                                                setData('quantity', current + amount);
+                                            }
+                                        }}
+                                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${adjustmentType === 'add' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        Add Stock
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAdjustmentType('remove');
+                                            if (currentItem) {
+                                                const current = Number(currentItem.quantity || 0);
+                                                const amount = Number(adjustmentAmount || 0);
+                                                setData('quantity', Math.max(0, current - amount));
+                                            }
+                                        }}
+                                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${adjustmentType === 'remove' ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        Remove Stock
+                                    </button>
+                                </div>
+
+                                <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+                                    <label className="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 px-1">Amount to {adjustmentType === 'add' ? 'Increase' : 'Decrease'}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={adjustmentAmount}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setAdjustmentAmount(val);
+                                                if (currentItem) {
+                                                    const current = Number(currentItem.quantity || 0);
+                                                    const amount = Number(val || 0);
+                                                    setData('quantity', adjustmentType === 'add' ? (current + amount) : Math.max(0, current - amount));
+                                                }
+                                            }}
+                                            className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-white shadow-sm font-black text-xl text-blue-900"
+                                            placeholder="Enter quantity"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mt-4 flex flex-col gap-2 bg-white/50 p-4 rounded-2xl border border-blue-100/30">
+                                        <div className="flex items-center justify-between px-1">
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Current Stock:</p>
+                                            <p className="text-sm font-black text-gray-400">{currentItem?.quantity || 0} Units</p>
+                                        </div>
+                                        <div className="h-px bg-blue-100/50 w-full" />
+                                        <div className="flex items-center justify-between px-1">
+                                            <p className="text-[10px] text-blue-400 font-black uppercase tracking-tight">New Expected Stock:</p>
+                                            <p className={`text-xl font-black ${adjustmentType === 'add' ? 'text-emerald-600' : 'text-rose-600'}`}>{data.quantity} Units</p>
+                                        </div>
+                                    </div>
+                                    {errors.quantity && <p className="text-red-500 text-[10px] font-bold mt-2 px-1 uppercase">{errors.quantity}</p>}
+                                </div>
+                            </div>
                         </div>
 
                         <button

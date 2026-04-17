@@ -3,7 +3,7 @@ import Pagination from '@/Components/Pagination';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 
 import { Head, useForm, router } from '@inertiajs/react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import TablePlaceholder from '@/Components/TablePlaceholder';
 
 
@@ -44,6 +44,34 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
         parent_id: '',
         variation_name: '',
     });
+
+    // Reactive Variation Inheritance & Name Auto-Formatting
+    useEffect(() => {
+        if (isAdding && data.parent_id) {
+            const parent = all_products.find(p => String(p.id) === String(data.parent_id));
+            if (parent) {
+                const baseName = parent.name || '';
+                const variationSuffix = data.variation_name ? ` - ${data.variation_name}` : '';
+                const combinedName = `${baseName}${variationSuffix}`;
+
+                // Update Name & Inherit fields (skip quantity)
+                setData(prev => ({
+                    ...prev,
+                    name: combinedName,
+                    category: prev.category || parent.category || '',
+                    description: prev.description || parent.description || '',
+                    price: prev.price || parent.price || '',
+                    cost_price: prev.cost_price || parent.cost_price || '',
+                    unit_name: prev.unit_name || parent.unit_name || 'Piece',
+                    // Inherit multi-unit settings if not already customized
+                    units_per_pack: prev.units_per_pack === 1 ? (parent.units_per_pack || 1) : prev.units_per_pack,
+                    packs_per_carton: prev.packs_per_carton === 1 ? (parent.packs_per_carton || 1) : prev.packs_per_carton,
+                    pack_price_override: prev.pack_price_override === '' ? (parent.pack_price_override || '') : prev.pack_price_override,
+                    carton_price_override: prev.carton_price_override === '' ? (parent.carton_price_override || '') : prev.carton_price_override,
+                }));
+            }
+        }
+    }, [data.parent_id, data.variation_name, isAdding]);
 
     const {
         data: editData,
@@ -187,7 +215,7 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             <tr className="bg-gray-50/50 border-b border-gray-100 uppercase text-[10px] font-black tracking-widest text-gray-400">
                                 <th className="p-4 pl-6">Product / Brand</th>
                                 <th className="p-4 font-black">SKU</th>
-                                <th className="p-4 text-center">Unit</th>
+                                <th className="p-4">Unit / Pack / Carton</th>
                                 <th className="p-4">Category</th>
                                 <th className="p-4">Stock Level</th>
                                 <th className="p-4 text-right">Cost</th>
@@ -223,12 +251,24 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                             <td className="p-4 font-mono text-[10px] font-bold text-gray-400">
                                                 {product.sku || 'N/A'}
                                             </td>
-                                            <td className="p-4 text-center">
-                                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-tighter">
-                                                    {product.unit_name}
-                                                    {product.units_per_pack > 1 && ` (x${product.units_per_pack})`}
-                                                    {product.packs_per_carton > 1 && ` [📦 x${product.packs_per_carton}]`}
-                                                </span>
+                                            <td className="p-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md uppercase tracking-tight w-max">
+                                                        📦 {product.unit_name || 'Piece'}
+                                                    </span>
+                                                    {product.units_per_pack > 1 && (
+                                                        <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase tracking-tight w-max">
+                                                            🎁 {product.units_per_pack} units/pack
+                                                            {product.pack_price_override > 0 && ` · ₦${Number(product.pack_price_override).toLocaleString()}`}
+                                                        </span>
+                                                    )}
+                                                    {product.packs_per_carton > 1 && (
+                                                        <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-tight w-max">
+                                                            🚛 {product.packs_per_carton} packs/carton
+                                                            {product.carton_price_override > 0 && ` · ₦${Number(product.carton_price_override).toLocaleString()}`}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4">
                                                 <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200 text-gray-600 block w-max uppercase">
@@ -352,7 +392,7 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
 
             {isAdding && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <form onSubmit={submitCreate} className="bg-white rounded-[40px] p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-300">
+                    <form onSubmit={submitCreate} className="bg-white rounded-[40px] p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-6 text-gray-900">
                             <h3 className="text-2xl font-black">Add New Product</h3>
                             <button type="button" onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
@@ -360,9 +400,38 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Product Name</label>
+                        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+                             <div className="bg-blue-50/50 p-6 rounded-[32px] border border-blue-100/50 space-y-4">
+                                <p className="text-[9px] font-black text-blue-400 uppercase tracking-[0.25em] mb-1 px-1">Variation Settings</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Is this a variation of?</label>
+                                        <select
+                                            value={data.parent_id}
+                                            onChange={e => setData('parent_id', e.target.value)}
+                                            className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-white font-medium text-xs h-[52px]"
+                                        >
+                                            <option value="">(None - Main Product)</option>
+                                            {all_products.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Variation Label (e.g. Vanilla, 500g)</label>
+                                        <input
+                                            type="text"
+                                            value={data.variation_name}
+                                            onChange={e => setData('variation_name', e.target.value)}
+                                            className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-white font-medium h-[52px]"
+                                            placeholder="Label for this variation"
+                                        />
+                                    </div>
+                                </div>
+                             </div>
+
+                             <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Product Name</label>
                                 <input
                                     type="text"
                                     value={data.name}
@@ -371,7 +440,7 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                     placeholder="Golden Morn 500g"
                                     required
                                 />
-                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                {errors.name && <p className="text-red-500 text-xs mt-1 px-1">{errors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Barcode / SKU (Optional)</label>
@@ -445,55 +514,89 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                         </div>
 
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs / Carton</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={data.packs_per_carton}
-                                    onChange={e => setData('packs_per_carton', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (Optional)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={data.carton_price_override}
-                                    onChange={e => setData('carton_price_override', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                    placeholder="Bulk rate for carton"
-                                />
+                        {/* ── 📦 Unit ─────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-[0.25em] mb-3">📦 Unit Definition</p>
+                            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Unit Name</label>
+                                    <input
+                                        type="text"
+                                        value={data.unit_name}
+                                        onChange={e => setData('unit_name', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. Piece, Bottle, Sachet, Can"
+                                    />
+                                    {errors.unit_name && <p className="text-red-500 text-xs mt-1">{errors.unit_name}</p>}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Is this a variation of?</label>
-                                <select
-                                    value={data.parent_id}
-                                    onChange={e => setData('parent_id', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-xs"
-                                >
-                                    <option value="">(None - Main Product)</option>
-                                    {all_products.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Variation Label</label>
-                                <input
-                                    type="text"
-                                    value={data.variation_name}
-                                    onChange={e => setData('variation_name', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                    placeholder="e.g. Vanilla, 500g, Large"
-                                />
+                        {/* ── 🎁 Pack ─────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em] mb-3">🎁 Pack Settings</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Units per Pack</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={data.units_per_pack}
+                                        onChange={e => setData('units_per_pack', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. 12"
+                                    />
+                                    {errors.units_per_pack && <p className="text-red-500 text-xs mt-1">{errors.units_per_pack}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pack Price (₦) — Optional</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={data.pack_price_override}
+                                        onChange={e => setData('pack_price_override', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder={data.units_per_pack > 1 ? `Auto: ₦${(Number(data.price || 0) * Number(data.units_per_pack || 1)).toLocaleString()}` : 'Set custom pack price'}
+                                    />
+                                    {errors.pack_price_override && <p className="text-red-500 text-xs mt-1">{errors.pack_price_override}</p>}
+                                </div>
                             </div>
                         </div>
+
+                        {/* ── 🚛 Carton ────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-orange-400 uppercase tracking-[0.25em] mb-3">🚛 Carton Settings</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs per Carton</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={data.packs_per_carton}
+                                        onChange={e => setData('packs_per_carton', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. 24"
+                                    />
+                                    {errors.packs_per_carton && <p className="text-red-500 text-xs mt-1">{errors.packs_per_carton}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (₦) — Optional</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={data.carton_price_override}
+                                        onChange={e => setData('carton_price_override', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder={data.packs_per_carton > 1 ? `Auto: ₦${(Number(data.price || 0) * Number(data.units_per_pack || 1) * Number(data.packs_per_carton || 1)).toLocaleString()}` : 'Set custom wholesale carton price'}
+                                    />
+                                    {errors.carton_price_override && <p className="text-red-500 text-xs mt-1">{errors.carton_price_override}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+
 
                         <div className="grid grid-cols-1 gap-4">
                             <div>
@@ -523,7 +626,7 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
 
             {editingProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <form onSubmit={submitEdit} className="bg-white rounded-[40px] p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-300">
+                    <form onSubmit={submitEdit} className="bg-white rounded-[40px] p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-6 text-gray-900">
                             <h3 className="text-2xl font-black">Edit Product</h3>
                             <button type="button" onClick={() => setEditingProduct(null)} className="text-gray-400 hover:text-gray-900 transition-colors">
@@ -531,7 +634,7 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Product Name</label>
                                 <input
@@ -553,9 +656,27 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                 />
                                 {editErrors.sku && <p className="text-red-500 text-xs mt-1">{editErrors.sku}</p>}
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category</label>
+                                <div className="md:col-span-2 bg-slate-50 p-6 rounded-[32px] border border-slate-100 mb-2">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div className="flex-1">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Inventory Status</label>
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                                                    <span className="text-2xl">📦</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Current Stock Level</h4>
+                                                    <p className="text-[10px] text-slate-500 font-bold">To modify stock, please use the <a href="/supermart/stock" className="text-blue-600 hover:underline">Stock Adjustment</a> tool.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full md:w-32 bg-white px-5 py-4 rounded-2xl border border-slate-200 text-center">
+                                            <span className="font-black text-2xl text-slate-400">{editData.quantity}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Category</label>
                                     <select
                                         value={editData.category}
                                         onChange={e => setEditData('category', e.target.value)}
@@ -569,19 +690,6 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                                     </select>
                                     {editErrors.category && <p className="text-red-500 text-xs mt-1">{editErrors.category}</p>}
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={editData.quantity}
-                                        onChange={e => setEditData('quantity', e.target.value)}
-                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                        required
-                                    />
-                                    {editErrors.quantity && <p className="text-red-500 text-xs mt-1">{editErrors.quantity}</p>}
-                                </div>
-                            </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retail Price (₦)</label>
@@ -609,26 +717,85 @@ export default function ProductCatalog({ products = { data: [], links: [] }, cat
                         </div>
 
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-50 pt-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs / Carton</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={editData.packs_per_carton}
-                                    onChange={e => setEditData('packs_per_carton', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                />
+                        {/* ── 📦 Unit ─────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-[0.25em] mb-3">📦 Unit Definition</p>
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Unit Name</label>
+                                    <input
+                                        type="text"
+                                        value={editData.unit_name}
+                                        onChange={e => setEditData('unit_name', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. Piece, Bottle, Sachet, Can"
+                                    />
+                                    {editErrors.unit_name && <p className="text-red-500 text-xs mt-1">{editErrors.unit_name}</p>}
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (Optional)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={editData.carton_price_override}
-                                    onChange={e => setEditData('carton_price_override', e.target.value)}
-                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
-                                />
+                        </div>
+
+                        {/* ── 🎁 Pack ─────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em] mb-3">🎁 Pack Settings</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Units per Pack</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={editData.units_per_pack}
+                                        onChange={e => setEditData('units_per_pack', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. 12"
+                                    />
+                                    {editErrors.units_per_pack && <p className="text-red-500 text-xs mt-1">{editErrors.units_per_pack}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pack Price (₦) — Optional</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={editData.pack_price_override}
+                                        onChange={e => setEditData('pack_price_override', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder={editData.units_per_pack > 1 ? `Auto: ₦${(Number(editData.price || 0) * Number(editData.units_per_pack || 1)).toLocaleString()}` : 'Set custom pack price'}
+                                    />
+                                    {editErrors.pack_price_override && <p className="text-red-500 text-xs mt-1">{editErrors.pack_price_override}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── 🚛 Carton ────────────────────────────────────────── */}
+                        <div className="border-t border-gray-50 pt-4">
+                            <p className="text-[9px] font-black text-orange-400 uppercase tracking-[0.25em] mb-3">🚛 Carton Settings</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Packs per Carton</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={editData.packs_per_carton}
+                                        onChange={e => setEditData('packs_per_carton', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder="e.g. 24"
+                                    />
+                                    {editErrors.packs_per_carton && <p className="text-red-500 text-xs mt-1">{editErrors.packs_per_carton}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Carton Price (₦) — Optional</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={editData.carton_price_override}
+                                        onChange={e => setEditData('carton_price_override', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                        placeholder={editData.packs_per_carton > 1 ? `Auto: ₦${(Number(editData.price || 0) * Number(editData.units_per_pack || 1) * Number(editData.packs_per_carton || 1)).toLocaleString()}` : 'Set custom wholesale carton price'}
+                                    />
+                                    {editErrors.carton_price_override && <p className="text-red-500 text-xs mt-1">{editErrors.carton_price_override}</p>}
+                                </div>
                             </div>
                         </div>
 

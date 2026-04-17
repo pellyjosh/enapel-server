@@ -16,6 +16,8 @@ export default function Suppliers({ suppliers = { data: [], links: [] } }) {
         supplier: '',
         company: '',
         phone: '',
+        email: '',
+        address: '',
     });
 
     const openCreateModal = () => {
@@ -30,6 +32,8 @@ export default function Suppliers({ suppliers = { data: [], links: [] } }) {
             supplier: s.supplier || '',
             company: s.company || '',
             phone: s.phone || '',
+            email: s.email || '',
+            address: s.address || '',
         });
         setIsModalOpen(true);
     };
@@ -101,9 +105,19 @@ export default function Suppliers({ suppliers = { data: [], links: [] } }) {
                         </div>
                         <h3 className="text-2xl font-black text-gray-900 mb-2">{s.supplier || s.name}</h3>
                         <p className="text-xs font-black uppercase text-blue-500 mb-4 tracking-widest">{s.company}</p>
-                        <div className="space-y-3 mb-8">
-                            <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><span>📱</span> {s.phone || 'No Contact'}</p>
-                            <p className="text-sm font-medium text-gray-500 flex items-center gap-2"><span>📍</span> Lagos, Nigeria</p>
+                        <div className="space-y-3 mb-8 min-h-[100px]">
+                            <p className="text-sm font-medium text-gray-500 flex items-center gap-3 truncate">
+                                <span className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-xs shadow-inner">📱</span> 
+                                <span className="font-bold">{s.phone || 'No Contact'}</span>
+                            </p>
+                            <p className="text-sm font-medium text-gray-500 flex items-center gap-3 truncate">
+                                <span className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-xs shadow-inner">✉️</span> 
+                                <span className="italic">{s.email || 'No email'}</span>
+                            </p>
+                            <p className="text-sm font-medium text-gray-500 flex items-start gap-3">
+                                <span className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-xs shadow-inner shrink-0">📍</span> 
+                                <span className="line-clamp-2 leading-relaxed italic">{s.address || 'Address not provided'}</span>
+                            </p>
                         </div>
                         <button className="w-full py-4 border-2 border-gray-100 hover:border-blue-500 hover:text-blue-500 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all">
                             View Supply Chain
@@ -167,16 +181,44 @@ export default function Suppliers({ suppliers = { data: [], links: [] } }) {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Phone Number</label>
                                 <input
                                     type="tel"
                                     value={data.phone}
                                     onChange={e => setData('phone', e.target.value)}
-                                    className="w-full px-6 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium"
                                     placeholder="e.g. 08012345678"
                                     required
                                 />
                                 {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={data.email}
+                                        onChange={e => setData('email', e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-xs"
+                                        placeholder="vendor@email.com"
+                                    />
+                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                </div>
+                                <div className="md:col-span-1">
+                                    {/* Placeholder for future field */}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Office Address</label>
+                                <textarea
+                                    value={data.address}
+                                    onChange={e => setData('address', e.target.value)}
+                                    className="w-full px-5 py-4 rounded-2xl border-gray-100 focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium text-sm min-h-[100px]"
+                                    placeholder="Enter full physical address..."
+                                />
+                                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                             </div>
                         </div>
 
